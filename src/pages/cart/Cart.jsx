@@ -271,11 +271,11 @@ function Cart() {
           : parseFloat(String(cartItem.unitPrice).replace('BD ', '').replace(/,/g, '')) || 0
         return {
           ...cartItem, 
-          quantity: newQuantity,
+            quantity: newQuantity,
           totalPrice: price * newQuantity,
           stock: availableStock // Update stock information
         }
-      }
+          }
       return cartItem
     })
     setCartItems(updatedCart)
@@ -795,7 +795,7 @@ function Cart() {
                   {sendingOrder ? 'Sending...' : 'Send to Accountant'}
                 </PrimaryButton>
                 <SecondaryButton to="/dashboard/catalog" style={{ marginLeft: '1rem' }}>
-                  Continue Shopping
+                  Continue
                 </SecondaryButton>
               </div>
             </div>
@@ -951,7 +951,7 @@ function Cart() {
                    window.location.href = '/dashboard/catalog'
                  }}
                >
-                 Continue Shopping
+                 Continue
                </PrimaryButton>
              </div>
            </div>

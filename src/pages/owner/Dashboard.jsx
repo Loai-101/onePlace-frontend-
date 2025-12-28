@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import { getApiUrl } from '../../utils/security'
 import {
   LineChart,
   Line,
@@ -46,6 +47,18 @@ function OwnerDashboard() {
   const [userRoleData, setUserRoleData] = useState([])
   const [categoryRevenueData, setCategoryRevenueData] = useState([])
   const [topProductsData, setTopProductsData] = useState([])
+  const [salesmanPerformanceData, setSalesmanPerformanceData] = useState([])
+
+  // Recent Orders filters
+  const [selectedSalesman, setSelectedSalesman] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('')
+  const [selectedAccount, setSelectedAccount] = useState('')
+  const [accounts, setAccounts] = useState([]) // Store accounts for filter dropdown
+  const [dateFilterType, setDateFilterType] = useState('') // '', 'single', 'range'
+  const [selectedDate, setSelectedDate] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [filteredOrders, setFilteredOrders] = useState([])
 
   // Chart colors
   const COLORS = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1', '#e83e8c', '#20c997', '#fd7e14']
@@ -53,6 +66,7 @@ function OwnerDashboard() {
   useEffect(() => {
     if (token) {
       loadDashboardData()
+      loadAccounts()
     }
   }, [token])
 
@@ -63,6 +77,79 @@ function OwnerDashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timePeriodFilter])
+
+  // Filter orders based on salesman, status, and date filters
+  useEffect(() => {
+    let filtered = [...orders]
+
+    // Filter by salesman
+    if (selectedSalesman) {
+      filtered = filtered.filter(order => {
+        const orderSalesmanId = order.createdBy?._id || order.createdBy
+        const orderSalesmanName = order.createdBy?.name || order.customer?.employee || 'N/A'
+        
+        if (selectedSalesman.startsWith('_id:')) {
+          const userId = selectedSalesman.replace('_id:', '')
+          return orderSalesmanId === userId || orderSalesmanId?.toString() === userId
+        } else {
+          return orderSalesmanName === selectedSalesman
+        }
+      })
+    }
+
+    // Filter by status
+    if (selectedStatus) {
+      filtered = filtered.filter(order => {
+        const orderStatus = order.accountantReviewStatus || order.status || order.orderStatus || 'pending'
+        // Normalize both statuses for comparison (handle underscores, spaces, case)
+        // Replace underscores with spaces, convert to lowercase, and trim
+        const normalizeStatus = (status) => status.toLowerCase().replace(/_/g, ' ').trim()
+        return normalizeStatus(orderStatus) === normalizeStatus(selectedStatus)
+      })
+    }
+
+    // Filter by account
+    if (selectedAccount) {
+      filtered = filtered.filter(order => {
+        const accountName = order.customer?.companyName || order.customer?.accountName || ''
+        return accountName === selectedAccount
+      })
+    }
+
+    // Filter by date
+    if (dateFilterType === 'single' && selectedDate) {
+      filtered = filtered.filter(order => {
+        const orderDate = new Date(order.createdAt)
+        const filterDate = new Date(selectedDate)
+        return orderDate.toDateString() === filterDate.toDateString()
+      })
+    } else if (dateFilterType === 'range' && dateFrom && dateTo) {
+      filtered = filtered.filter(order => {
+        const orderDate = new Date(order.createdAt)
+        const fromDate = new Date(dateFrom)
+        const toDate = new Date(dateTo)
+        // Set time to start/end of day for proper comparison
+        fromDate.setHours(0, 0, 0, 0)
+        toDate.setHours(23, 59, 59, 999)
+        orderDate.setHours(0, 0, 0, 0)
+        return orderDate >= fromDate && orderDate <= toDate
+      })
+    }
+
+    setFilteredOrders(filtered)
+  }, [orders, selectedSalesman, selectedStatus, selectedAccount, dateFilterType, selectedDate, dateFrom, dateTo])
+
+  // Get unique statuses from orders
+  const uniqueStatuses = useMemo(() => {
+    const statusSet = new Set()
+    orders.forEach(order => {
+      const status = order.accountantReviewStatus || order.status || order.orderStatus
+      if (status) {
+        statusSet.add(status)
+      }
+    })
+    return Array.from(statusSet).sort()
+  }, [orders])
 
   const loadDashboardData = async (forceRefresh = false) => {
     // Prevent too frequent requests (cache for 30 seconds)
@@ -76,26 +163,30 @@ function OwnerDashboard() {
       setError(null)
 
       // Load all data in parallel
-      const [ordersRes, productsRes, usersRes, categoriesRes, brandsRes, orderStatsRes, userStatsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/orders?limit=200&sort=createdAt&order=desc', {
+      const apiUrl = getApiUrl()
+      const [ordersRes, productsRes, usersRes, categoriesRes, brandsRes, orderStatsRes, userStatsRes, calendarRes] = await Promise.all([
+        fetch(`${apiUrl}/api/orders?limit=200&sort=createdAt&order=desc`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:5000/api/products?limit=500', {
+        fetch(`${apiUrl}/api/products?limit=500`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:5000/api/users?limit=100', {
+        fetch(`${apiUrl}/api/users?limit=100`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:5000/api/categories', {
+        fetch(`${apiUrl}/api/categories`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:5000/api/brands', {
+        fetch(`${apiUrl}/api/brands`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:5000/api/orders/statistics', {
+        fetch(`${apiUrl}/api/orders/statistics`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:5000/api/users/statistics', {
+        fetch(`${apiUrl}/api/users/statistics`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        }),
+        fetch(`${apiUrl}/api/calendar?type=visit`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         })
       ])
@@ -115,10 +206,25 @@ function OwnerDashboard() {
       const brandsData = await brandsRes.json()
       const orderStatsData = await orderStatsRes.json()
       const userStatsData = await userStatsRes.json()
+      const calendarData = await calendarRes.json()
 
-      if (ordersData.success) {
-        setOrders(ordersData.data || [])
-        processChartData(ordersData.data || [], timePeriodFilter)
+      if (ordersData.success && ordersData.data) {
+        // Ensure orders are sorted by date (most recent first) and are real data from database
+        const ordersList = ordersData.data
+          .filter(order => order && order._id) // Filter out invalid orders
+          .sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.date || 0)
+            const dateB = new Date(b.createdAt || b.date || 0)
+            return dateB - dateA // Most recent first
+          })
+        
+        console.log(`✅ Loaded ${ordersList.length} orders from database`)
+        setOrders(ordersList)
+        setFilteredOrders(ordersList) // Initialize filtered orders
+        processChartData(ordersList, timePeriodFilter)
+      } else {
+        console.error('❌ Failed to load orders:', ordersData.message || 'Unknown error')
+        setOrders([])
       }
 
       if (productsData.success) {
@@ -167,12 +273,42 @@ function OwnerDashboard() {
         })
       }
 
+      // Process salesman performance and visit completion data
+      if (ordersData.success && usersData.success && calendarData.success) {
+        processSalesmanPerformance(
+          ordersData.data || [], 
+          usersData.data || [], 
+          calendarData.data || []
+        )
+      }
+
       setLastFetchTime(now)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
       setError('Failed to load dashboard data. Please try again later.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAccounts = async () => {
+    try {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/accounts`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setAccounts(data.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading accounts:', error)
+      setAccounts([])
     }
   }
 
@@ -296,6 +432,63 @@ function OwnerDashboard() {
     setTopProductsData(topProducts)
   }
 
+  // Process salesman performance data
+  const processSalesmanPerformance = (orders, users, calendarEvents) => {
+    // Get all salesmen
+    const salesmen = users.filter(user => user.role === 'salesman')
+    
+    if (salesmen.length === 0) {
+      setSalesmanPerformanceData([])
+      return
+    }
+
+    // Calculate performance for each salesman
+    const performanceData = salesmen.map(salesman => {
+      const salesmanId = salesman._id?.toString() || salesman.id?.toString()
+      
+      // Calculate orders and revenue for this salesman
+      const salesmanOrders = orders.filter(order => {
+        const orderCreatorId = order.createdBy?._id?.toString() || 
+                              order.createdBy?.toString() || 
+                              order.createdBy
+        return orderCreatorId === salesmanId
+      })
+      
+      const totalOrders = salesmanOrders.length
+      const totalRevenue = salesmanOrders.reduce((sum, order) => {
+        return sum + (order.pricing?.total || 0)
+      }, 0)
+      
+      // Calculate completed visits for this salesman
+      const salesmanVisits = calendarEvents.filter(event => {
+        const eventCreatorId = event.createdBy?._id?.toString() || 
+                               event.createdBy?.toString() || 
+                               event.createdBy
+        return eventCreatorId === salesmanId && event.type === 'visit'
+      })
+      
+      const completedVisits = salesmanVisits.filter(visit => 
+        visit.status === 'completed'
+      ).length
+      
+      const totalVisits = salesmanVisits.length
+      
+      return {
+        name: salesman.name || 'Unknown',
+        orders: totalOrders,
+        revenue: totalRevenue,
+        completedVisits: completedVisits,
+        totalVisits: totalVisits,
+        visitCompletionRate: totalVisits > 0 ? (completedVisits / totalVisits * 100).toFixed(1) : 0
+      }
+    })
+    
+    // Sort by revenue (descending)
+    performanceData.sort((a, b) => b.revenue - a.revenue)
+    
+    setSalesmanPerformanceData(performanceData)
+  }
+
   // Calculate user role distribution
   useEffect(() => {
     if (users.length > 0) {
@@ -356,7 +549,6 @@ function OwnerDashboard() {
     <div className="owner-dashboard">
       <div className="dashboard-header">
         <h1 className="dashboard-title">Owner Dashboard</h1>
-        <p className="dashboard-subtitle">Complete business overview and analytics</p>
       </div>
 
       {error && (
@@ -599,9 +791,9 @@ function OwnerDashboard() {
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}
                   ></span>
                   <span>{item.name}: {item.value} orders ({formatCurrency(item.amount)})</span>
-                </div>
+          </div>
               ))}
-            </div>
+          </div>
           </div>
         </PageSection>
 
@@ -634,12 +826,12 @@ function OwnerDashboard() {
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}
                   ></span>
                   <span>{item.name}: {item.value} users</span>
-                </div>
-              ))}
-            </div>
           </div>
-        </PageSection>
-
+              ))}
+          </div>
+        </div>
+      </PageSection>
+      
         <PageSection title="Top Categories by Revenue">
           <div className="chart-container">
             <ResponsiveContainer width="100%" height={300}>
@@ -669,6 +861,69 @@ function OwnerDashboard() {
             </ResponsiveContainer>
           </div>
         </PageSection>
+
+        <PageSection title="Salesman Performance & Completed Visits">
+          <div className="chart-container">
+            {salesmanPerformanceData.length === 0 ? (
+              <EmptyState message="No salesman performance data available" />
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={salesmanPerformanceData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={100}
+                      interval={0}
+                    />
+                    <YAxis yAxisId="left" orientation="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === 'revenue') return formatCurrency(value)
+                        if (name === 'visitCompletionRate') return `${value}%`
+                        return value
+                      }}
+                      labelFormatter={(label) => `Salesman: ${label}`}
+                    />
+                    <Legend />
+                    <Bar 
+                      yAxisId="left"
+                      dataKey="orders" 
+                      fill="#007bff" 
+                      name="Total Orders"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      yAxisId="left"
+                      dataKey="completedVisits" 
+                      fill="#28a745" 
+                      name="Completed Visits"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      yAxisId="right"
+                      dataKey="revenue" 
+                      fill="#ffc107" 
+                      name="Revenue (BD)"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="chart-legend" style={{ marginTop: '20px' }}>
+                  <h4 style={{ marginBottom: '10px', fontSize: '14px', fontWeight: '600' }}>Performance Summary:</h4>
+                  {salesmanPerformanceData.map((salesman, index) => (
+                    <div key={index} className="legend-item" style={{ marginBottom: '8px', padding: '8px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                      <strong>{salesman.name}:</strong> {salesman.orders} orders | {formatCurrency(salesman.revenue)} revenue | {salesman.completedVisits}/{salesman.totalVisits} visits completed ({salesman.visitCompletionRate}%)
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </PageSection>
       </div>
 
       {/* Quick Actions */}
@@ -691,7 +946,7 @@ function OwnerDashboard() {
           </SecondaryButton>
         </div>
       </PageSection>
-
+      
       {/* Low Stock Alerts */}
       <PageSection title="Low Stock Alerts">
         {lowStockProducts.length === 0 ? (
@@ -738,49 +993,300 @@ function OwnerDashboard() {
           </div>
         )}
       </PageSection>
-
+      
       {/* Recent Orders */}
       <PageSection title="Recent Orders">
         {orders.length === 0 ? (
           <EmptyState message="No recent orders found" />
         ) : (
-          <div className="recent-orders-table-container">
-            <table className="recent-orders-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Date</th>
-                  <th>Customer</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.slice(0, 10).map(order => (
-                  <tr key={order._id}>
-                    <td>#{order.orderNumber || order._id}</td>
-                    <td>{formatDate(order.createdAt)}</td>
-                    <td>{order.customer?.companyName || 'N/A'}</td>
-                    <td>
-                      <span className={`status-badge status-${order.status || 'pending'}`}>
-                        {order.status || 'pending'}
-                      </span>
-                    </td>
-                    <td>{formatCurrency(order.pricing?.total)}</td>
-                    <td>
-                      <PrimaryButton 
-                        onClick={() => navigate('/dashboard/orders')}
-                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                      >
-                        View
-                      </PrimaryButton>
-                    </td>
+          <>
+            {/* Filters */}
+            <div className="recent-orders-filters" style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              marginBottom: '1.5rem', 
+              flexWrap: 'wrap',
+              alignItems: 'flex-end'
+            }}>
+              <div className="form-group" style={{ minWidth: '200px' }}>
+                <label htmlFor="salesman-filter" style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                  color: '#333'
+                }}>
+                  Filter by Salesman
+                </label>
+                <select
+                  id="salesman-filter"
+                  value={selectedSalesman}
+                  onChange={(e) => setSelectedSalesman(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <option value="">All Salesmen</option>
+                  {users
+                    .filter(user => user.role === 'salesman' && user.name)
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map(user => (
+                      <option key={user._id} value={`_id:${user._id}`}>
+                        {user.name} {user.email ? `(${user.email})` : ''}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ minWidth: '200px' }}>
+                <label htmlFor="status-filter" style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                  color: '#333'
+                }}>
+                  Filter by Status
+                </label>
+                <select
+                  id="status-filter"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <option value="">All Statuses</option>
+                  {uniqueStatuses.map(status => (
+                    <option key={status} value={status}>
+                      {status.replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ minWidth: '200px' }}>
+                <label htmlFor="account-filter" style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                  color: '#333'
+                }}>
+                  Filter by Account
+                </label>
+                <select
+                  id="account-filter"
+                  value={selectedAccount}
+                  onChange={(e) => setSelectedAccount(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <option value="">All Accounts</option>
+                  {accounts
+                    .filter(account => account.name)
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map(account => (
+                      <option key={account._id} value={account.name}>
+                        {account.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ minWidth: '200px' }}>
+                <label htmlFor="date-filter-type" style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                  color: '#333'
+                }}>
+                  Filter by Date
+                </label>
+                <select
+                  id="date-filter-type"
+                  value={dateFilterType}
+                  onChange={(e) => {
+                    setDateFilterType(e.target.value)
+                    setSelectedDate('')
+                    setDateFrom('')
+                    setDateTo('')
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <option value="">No Date Filter</option>
+                  <option value="single">Single Day</option>
+                  <option value="range">Date Range</option>
+                </select>
+              </div>
+
+              {dateFilterType === 'single' && (
+                <div className="form-group" style={{ minWidth: '180px' }}>
+                  <label htmlFor="selected-date" style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem', 
+                    fontWeight: '600',
+                    fontSize: '0.875rem',
+                    color: '#333'
+                  }}>
+                    Select Date
+                  </label>
+                  <input
+                    type="date"
+                    id="selected-date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '0.875rem'
+                    }}
+                  />
+                </div>
+              )}
+
+              {dateFilterType === 'range' && (
+                <>
+                  <div className="form-group" style={{ minWidth: '180px' }}>
+                    <label htmlFor="date-from" style={{ 
+                      display: 'block', 
+                      marginBottom: '0.5rem', 
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      color: '#333'
+                    }}>
+                      From Date
+                    </label>
+                    <input
+                      type="date"
+                      id="date-from"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '0.875rem'
+                      }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ minWidth: '180px' }}>
+                    <label htmlFor="date-to" style={{ 
+                      display: 'block', 
+                      marginBottom: '0.5rem', 
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      color: '#333'
+                    }}>
+                      To Date
+                    </label>
+                    <input
+                      type="date"
+                      id="date-to"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '0.875rem'
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="recent-orders-table-container">
+              <table className="recent-orders-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Account</th>
+                    <th>Salesman</th>
+                    <th>Payment Method</th>
+                    <th>Status</th>
+                    <th>Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                        No orders found matching the selected filters
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredOrders.map(order => {
+                  // Ensure we have valid order data
+                  if (!order || !order._id) return null
+                  
+                  const orderId = order.orderNumber || order._id?.toString().substring(0, 8) || 'N/A'
+                  const orderDate = order.createdAt || order.date || null
+                  const accountName = order.customer?.companyName || order.customer?.accountName || 'N/A'
+                  const salesmanName = order.createdBy?.name || order.customer?.employee || 'N/A'
+                  const paymentMethod = order.payment?.method || 'credit'
+                  const methodMap = {
+                    'cash': 'Cash',
+                    'visa': 'Visa',
+                    'benefit': 'BenefitPay',
+                    'floos': 'Flooss',
+                    'credit': 'Credit'
+                  }
+                  const paymentMethodDisplay = methodMap[paymentMethod] || paymentMethod.toUpperCase()
+                  const orderStatus = order.accountantReviewStatus || order.status || order.orderStatus || 'pending'
+                  const orderTotal = order.pricing?.total || order.total || 0
+                  
+                  return (
+                    <tr key={order._id}>
+                      <td>#{orderId}</td>
+                      <td>{formatDate(orderDate)}</td>
+                      <td>{accountName}</td>
+                      <td>{salesmanName}</td>
+                      <td>
+                        <span className="payment-method-badge">
+                          {paymentMethodDisplay}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge status-${orderStatus.toLowerCase().replace('_', '-')}`}>
+                          {orderStatus.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td>{formatCurrency(orderTotal)}</td>
+                    </tr>
+                  )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </PageSection>
     </div>

@@ -371,6 +371,46 @@
   color: #383d41;
 }
 
+.status-badge.status-pending-review,
+.status-badge.status-pending_review {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.status-under-review,
+.status-badge.status-under_review {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.status-badge.status-approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.status-rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.status-cancelled {
+  background: #6c757d;
+  color: #ffffff;
+}
+
+/* Payment Method Badge */
+.payment-method-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .charts-grid {
@@ -403,7 +443,7 @@
 
   .low-stock-table,
   .recent-orders-table {
-    min-width: 800px;
+    min-width: 1000px;
   }
 
   .chart-filter-buttons {

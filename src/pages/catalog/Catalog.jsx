@@ -6,7 +6,8 @@ import EmptyState from '../../components/EmptyState.jsx'
 import './Catalog.css'
 
 function Catalog() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
+  const isOwner = user?.role === 'owner' || user?.role === 'admin'
   const [companies, setCompanies] = useState([])
   const [loadingAccounts, setLoadingAccounts] = useState(true)
   const [categories, setCategories] = useState([{ name: 'All', image: null }])
@@ -510,7 +511,22 @@ function Catalog() {
     <div className="catalog-page">
       <h1 className="page-title">Product Menu</h1>
       
-      {/* Company, Employee & Order Status Selection Section */}
+      {isOwner && (
+        <div style={{ 
+          background: '#e3f2fd', 
+          padding: '1rem', 
+          borderRadius: '8px', 
+          marginBottom: '1.5rem',
+          border: '1px solid #1976d2'
+        }}>
+          <p style={{ margin: 0, color: '#1976d2', fontWeight: '500' }}>
+            📋 <strong>View Only Mode:</strong> You can browse products but cannot place orders.
+          </p>
+        </div>
+      )}
+      
+      {/* Company, Employee & Order Status Selection Section - Hidden for owners */}
+      {!isOwner && (
       <div className="company-employee-section">
         <div className="filter-section">
           <h3>Select Company, Employee & Order Status</h3>
@@ -619,6 +635,7 @@ function Catalog() {
           </div>
         </div>
       </div>
+      )}
       
       {/* Categories and Brands Section */}
       <div className="categories-brands-section">
@@ -902,12 +919,27 @@ function Catalog() {
                           </div>
                         </div>
                         <div className="product-actions-wrapper">
-                          <button 
-                            className="add-to-cart-btn"
-                            onClick={() => handleAddToCart(product)}
-                          >
-                            Add to Cart
-                          </button>
+                          {isOwner ? (
+                            <button 
+                              className="add-to-cart-btn"
+                              disabled
+                              style={{ 
+                                opacity: 0.6, 
+                                cursor: 'not-allowed',
+                                backgroundColor: '#ccc'
+                              }}
+                              title="View only - Orders are not available for owners"
+                            >
+                              View Only
+                            </button>
+                          ) : (
+                            <button 
+                              className="add-to-cart-btn"
+                              onClick={() => handleAddToCart(product)}
+                            >
+                              Add to Cart
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1017,12 +1049,27 @@ function Catalog() {
                             </div>
                           </div>
                           <div className="product-actions-wrapper">
-                            <button 
-                              className="add-to-cart-btn"
-                              onClick={() => handleAddToCart(product)}
-                            >
-                              Add to Cart
-                            </button>
+                            {isOwner ? (
+                              <button 
+                                className="add-to-cart-btn"
+                                disabled
+                                style={{ 
+                                  opacity: 0.6, 
+                                  cursor: 'not-allowed',
+                                  backgroundColor: '#ccc'
+                                }}
+                                title="View only - Orders are not available for owners"
+                              >
+                                View Only
+                              </button>
+                            ) : (
+                              <button 
+                                className="add-to-cart-btn"
+                                onClick={() => handleAddToCart(product)}
+                              >
+                                Add to Cart
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1122,13 +1169,13 @@ function Catalog() {
                 className="success-ok-btn"
                 onClick={() => setShowSuccessPopup({...showSuccessPopup, show: false})}
               >
-                Continue Shopping
+                Continue
               </button>
               <button 
                 className="success-cart-btn"
                 onClick={() => {
                   setShowSuccessPopup({...showSuccessPopup, show: false})
-                  window.location.href = '/cart'
+                  window.location.href = '/dashboard/cart'
                 }}
               >
                 View Cart

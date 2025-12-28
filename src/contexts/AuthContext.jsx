@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { getApiUrl, safeJsonParse } from '../utils/security'
 
 const AuthContext = createContext()
 
@@ -24,12 +25,19 @@ export const AuthProvider = ({ children }) => {
         
         if (storedToken && storedUser) {
           setToken(storedToken)
-          const parsedUser = JSON.parse(storedUser)
+          const parsedUser = safeJsonParse(storedUser, null)
+          if (!parsedUser) {
+            // Invalid JSON, clear storage
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            setIsLoading(false)
+            return
+          }
           
           // If company is just an ID, fetch full company details
           if (parsedUser.company && typeof parsedUser.company === 'string') {
             try {
-              const response = await fetch('http://localhost:5000/api/auth/me', {
+              const response = await fetch(`${getApiUrl()}/api/auth/me`, {
                 headers: {
                   'Authorization': `Bearer ${storedToken}`,
                   'Content-Type': 'application/json'
@@ -70,7 +78,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${getApiUrl()}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +105,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${getApiUrl()}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,7 +142,7 @@ export const AuthProvider = ({ children }) => {
         // Test backend connectivity first
         if (attempt === 1) {
           try {
-            const healthResponse = await fetch('http://localhost:5000/health', {
+            const healthResponse = await fetch(`${getApiUrl()}/health`, {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
@@ -148,7 +156,7 @@ export const AuthProvider = ({ children }) => {
           }
         }
         
-        const response = await fetch('http://localhost:5000/api/companies/register', {
+        const response = await fetch(`${getApiUrl()}/api/companies/register`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -214,7 +222,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Call logout endpoint if token exists
       if (token) {
-        await fetch('http://localhost:5000/api/auth/logout', {
+        await fetch(`${getApiUrl()}/api/auth/logout`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

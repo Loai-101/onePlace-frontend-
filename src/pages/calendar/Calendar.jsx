@@ -5,6 +5,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import { getApiUrl } from '../../utils/security'
 import './Calendar.css'
 
 function Calendar() {
@@ -15,8 +16,11 @@ function Calendar() {
   const [showEventModal, setShowEventModal] = useState(false)
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [showAllEventsModal, setShowAllEventsModal] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [selectedDate, setSelectedDate] = useState(null)
+  const [selectedDayEvents, setSelectedDayEvents] = useState([])
+  const [selectedDayDate, setSelectedDayDate] = useState(null)
   const [accounts, setAccounts] = useState([])
   
   // Report form state
@@ -54,10 +58,11 @@ function Calendar() {
   const loadEvents = async () => {
     try {
       setLoading(true)
+      const apiUrl = getApiUrl()
       const start = format(startOfMonth(currentDate), 'yyyy-MM-dd')
       const end = format(endOfMonth(currentDate), 'yyyy-MM-dd')
       
-      const response = await fetch(`http://localhost:5000/api/calendar?startDate=${start}&endDate=${end}`, {
+      const response = await fetch(`${apiUrl}/api/calendar?startDate=${start}&endDate=${end}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -78,7 +83,8 @@ function Calendar() {
 
   const loadAccounts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/accounts', {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/accounts`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -103,7 +109,16 @@ function Calendar() {
 
   const handleEventClick = async (event) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/calendar/${event.id}`, {
+      const apiUrl = getApiUrl()
+      // Handle both _id and id properties
+      const eventId = event._id || event.id
+      
+      if (!eventId) {
+        showNotification('Error: Event ID not found', 'error')
+        return
+      }
+      
+      const response = await fetch(`${apiUrl}/api/calendar/${eventId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -130,9 +145,12 @@ function Calendar() {
         setEventFeedback(data.data.feedback || '')
         setEventType(data.data.type)
         setShowEventDetailsModal(true)
+      } else {
+        showNotification(data.message || 'Error loading event details', 'error')
       }
     } catch (error) {
       console.error('Error loading event details:', error)
+      showNotification('Error loading event details. Please try again.', 'error')
     }
   }
 
@@ -155,7 +173,8 @@ function Calendar() {
 
     try {
       setSaving(true)
-      const response = await fetch('http://localhost:5000/api/calendar', {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/calendar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -207,7 +226,8 @@ function Calendar() {
 
     try {
       setSaving(true)
-      const response = await fetch(`http://localhost:5000/api/calendar/${selectedEvent._id}`, {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/calendar/${selectedEvent._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -253,7 +273,8 @@ function Calendar() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/calendar/${selectedEvent._id}`, {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/calendar/${selectedEvent._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -309,7 +330,8 @@ function Calendar() {
 
     try {
       setSendingReport(true)
-      const response = await fetch('http://localhost:5000/api/calendar/report', {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/calendar/report`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -473,7 +495,7 @@ function Calendar() {
                           style={{ backgroundColor: getEventColor(event, eventIndex, dayEvents) }}
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleEventClick({ id: event._id })
+                            handleEventClick(event)
                           }}
                           title={event.title}
                         >
@@ -481,7 +503,18 @@ function Calendar() {
                         </div>
                       ))}
                       {dayEvents.length > 3 && (
-                        <div className="more-events">+{dayEvents.length - 3} more</div>
+                        <div 
+                          className="more-events"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedDayEvents(dayEvents)
+                            setSelectedDayDate(day)
+                            setShowAllEventsModal(true)
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          +{dayEvents.length - 3} more
+                        </div>
                       )}
                     </div>
                   </div>
@@ -771,6 +804,74 @@ function Calendar() {
               <PrimaryButton onClick={handleUpdateEvent} disabled={saving}>
                 {saving ? 'Saving...' : 'Update Event'}
               </PrimaryButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* All Events Modal */}
+      {showAllEventsModal && selectedDayEvents.length > 0 && (
+        <div className="modal-overlay" onClick={() => {
+          setShowAllEventsModal(false)
+          setSelectedDayEvents([])
+          setSelectedDayDate(null)
+        }}>
+          <div className="modal-content all-events-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>All Events - {selectedDayDate && format(selectedDayDate, 'MMMM d, yyyy')}</h2>
+              <button className="modal-close" onClick={() => {
+                setShowAllEventsModal(false)
+                setSelectedDayEvents([])
+                setSelectedDayDate(null)
+              }}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="all-events-list">
+                {selectedDayEvents.map((event, index) => (
+                  <div
+                    key={event._id}
+                    className="event-item"
+                    onClick={() => {
+                      setShowAllEventsModal(false)
+                      handleEventClick(event)
+                    }}
+                  >
+                    <div 
+                      className="event-color-indicator"
+                      style={{ backgroundColor: getEventColor(event, index, selectedDayEvents) }}
+                    ></div>
+                    <div className="event-item-content">
+                      <div className="event-item-title">{event.title}</div>
+                      <div className="event-item-details">
+                        {event.type === 'visit' && (
+                          <span className="event-item-type">Visit</span>
+                        )}
+                        {event.type === 'todo' && (
+                          <span className="event-item-type">Todo</span>
+                        )}
+                        {event.startTime && (
+                          <span className="event-item-time">{event.startTime}</span>
+                        )}
+                        {event.accountName && (
+                          <span className="event-item-account">{event.accountName}</span>
+                        )}
+                      </div>
+                      {event.description && (
+                        <div className="event-item-description">{event.description}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <SecondaryButton onClick={() => {
+                setShowAllEventsModal(false)
+                setSelectedDayEvents([])
+                setSelectedDayDate(null)
+              }}>
+                Close
+              </SecondaryButton>
             </div>
           </div>
         </div>

@@ -70,10 +70,31 @@ function Header() {
     return roleNames[role] || role
   }
 
+  const getHomePath = () => {
+    if (!isAuthenticated() || !user) return '/'
+    
+    switch (user.role) {
+      case 'owner':
+      case 'admin':
+        return '/dashboard/owner'
+      case 'accountant':
+        return '/dashboard/accountant'
+      case 'salesman':
+        return '/dashboard'
+      default:
+        return '/'
+    }
+  }
+
   return (
     <header className="header">
+      <div className="header-left"></div>
+      
       <div className="logo">
-        <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Link 
+          to={getHomePath()} 
+          style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
           <img 
             src="https://res.cloudinary.com/dvybb2xnc/image/upload/v1759838355/OP_Logo_ec0wjg.png" 
             alt="One Place Logo" 
@@ -89,14 +110,14 @@ function Header() {
             <div className="welcome-message">
               Welcome, <span className="welcome-name">{user.name}</span>
             </div>
-            <div className="user-menu-container" ref={userMenuRef}>
-              <div 
-                className="user-avatar" 
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                title={`${user.name} (${getRoleDisplayName(user.role)})`}
-              >
-                {getUserInitials(user.name)}
-              </div>
+          <div className="user-menu-container" ref={userMenuRef}>
+            <div 
+              className="user-avatar" 
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              title={`${user.name} (${getRoleDisplayName(user.role)})`}
+            >
+              {getUserInitials(user.name)}
+            </div>
             
             {showUserMenu && (
               <div className="user-menu">
@@ -125,7 +146,7 @@ function Header() {
                 </div>
               </div>
             )}
-            </div>
+          </div>
           </>
         ) : (
           <div className="auth-links">

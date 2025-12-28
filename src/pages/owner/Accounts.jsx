@@ -4,6 +4,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import { getApiUrl } from '../../utils/security'
 import './Accounts.css'
 
 function Accounts() {
@@ -71,7 +72,8 @@ function Accounts() {
   const loadAccounts = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:5000/api/accounts', {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/accounts`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -88,7 +90,11 @@ function Accounts() {
       }
     } catch (error) {
       console.error('Error loading accounts:', error)
-      setErrorMessage('Error loading accounts')
+      if (error.message && error.message.includes('Failed to fetch')) {
+        setErrorMessage('Cannot connect to server. Please ensure the backend server is running on port 5000.')
+      } else {
+        setErrorMessage('Error loading accounts')
+      }
     } finally {
       setLoading(false)
     }
@@ -256,7 +262,8 @@ function Accounts() {
       formData.append('image', file)
       formData.append('folder', 'accounts')
 
-      const response = await fetch('http://localhost:5000/api/upload/image', {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/upload/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -276,6 +283,10 @@ function Accounts() {
       }
     } catch (error) {
       console.error('Error uploading image:', error)
+      // Provide more helpful error message
+      if (error.message && error.message.includes('bucket')) {
+        throw new Error('Storage bucket error. Please ensure the "images" bucket exists in Supabase Storage and has proper permissions.')
+      }
       throw error
     } finally {
       setUploading(false)
@@ -342,8 +353,14 @@ function Accounts() {
 
       // Upload logo if a new file was selected
       if (logoFile) {
-        const logoData = await uploadImageToSupabase(logoFile)
-        submitData.logo = logoData
+        try {
+          const logoData = await uploadImageToSupabase(logoFile)
+          submitData.logo = logoData
+        } catch (uploadError) {
+          console.error('Error uploading logo:', uploadError)
+          setErrorMessage(uploadError.message || 'Failed to upload logo image. Please check that the Supabase storage bucket "images" exists and has proper permissions.')
+          return
+        }
       } else if (selectedAccount && logoPreview && !logoFile) {
         // For editing, if there's a preview but no new file, keep existing logo
         // Don't include logo in submitData - backend will keep existing
@@ -383,7 +400,8 @@ function Accounts() {
       }
     } catch (error) {
       console.error('Error saving account:', error)
-      setErrorMessage('Error saving account')
+      const errorMessage = error.message || 'Error saving account'
+      setErrorMessage(errorMessage)
     }
   }
 
@@ -706,12 +724,23 @@ function Accounts() {
                 <div className="account-header">
                   <div className="account-logo-wrapper">
                     {account.logo?.url ? (
-                      <img src={account.logo.url} alt={account.name} className="account-logo" />
-                    ) : (
-                      <div className="account-logo-placeholder">
-                        <span>No Logo</span>
-                      </div>
-                    )}
+                      <img 
+                        src={account.logo.url} 
+                        alt={account.name} 
+                        className="account-logo"
+                        onError={(e) => {
+                          e.target.onerror = null // Prevent infinite loop
+                          e.target.style.display = 'none'
+                          const placeholder = e.target.parentElement.querySelector('.account-logo-placeholder')
+                          if (placeholder) {
+                            placeholder.style.display = 'flex'
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div className="account-logo-placeholder" style={{ display: account.logo?.url ? 'none' : 'flex' }}>
+                      <span>No Logo</span>
+                    </div>
                   </div>
                   <div className="account-header-info">
                     <h3>{account.name}</h3>

@@ -4,7 +4,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  background-image: url('https://res.cloudinary.com/dvybb2xnc/image/upload/v1763543451/accounts/orvtk0dzfxyj7mrgnfts.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
   padding: 20px;
   position: relative;
@@ -59,7 +62,6 @@
   width: auto;
   object-fit: contain;
   transition: all 0.3s ease;
-  animation: float 3s ease-in-out infinite;
 }
 
 .admin-login-logo:hover {

@@ -97,19 +97,30 @@
 .header {
   background: linear-gradient(90deg, #0066cc 0%, #0052a3 50%, #003d7a 100%);
   border-bottom: 1px solid #e9ecef;
-  padding: 1rem 2rem 1rem 4rem;
-  display: flex;
-  justify-content: space-between;
+  padding: 1rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
+.header-left {
+  /* Empty left section for balance */
+}
+
 .header .logo {
   font-size: 1.5rem;
   font-weight: 600;
   color: #ffffff;
+  justify-self: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.header .logo:hover {
+  opacity: 0.9;
 }
 
 .header .nav {
@@ -189,6 +200,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  justify-self: end;
 }
 
 .welcome-message {

@@ -158,6 +158,14 @@ function Sidebar({ isOpen, setIsOpen }) {
                   Calendar
                 </Link>
               </li>
+              <li>
+                <Link 
+                  to="/dashboard/catalog" 
+                  className={location.pathname === '/dashboard/catalog' ? 'active' : ''}
+                >
+                  Menu
+                </Link>
+              </li>
             </ul>
           </div>
         )}

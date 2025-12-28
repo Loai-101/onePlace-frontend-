@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import '../calendar/Calendar.css'
@@ -13,7 +14,10 @@ function OwnerCalendar() {
   const [selectedSalesman, setSelectedSalesman] = useState('')
   const [salesmen, setSalesmen] = useState([])
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false)
+  const [showAllEventsModal, setShowAllEventsModal] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
+  const [selectedDayEvents, setSelectedDayEvents] = useState([])
+  const [selectedDayDate, setSelectedDayDate] = useState(null)
   const [loadingSalesmen, setLoadingSalesmen] = useState(false)
 
   useEffect(() => {
@@ -31,22 +35,46 @@ function OwnerCalendar() {
   const loadSalesmen = async () => {
     try {
       setLoadingSalesmen(true)
-      const response = await fetch(`http://localhost:5000/api/users/company/${user.company}`, {
+      const apiUrl = getApiUrl()
+      
+      console.log('Loading salesmen from:', `${apiUrl}/api/users?limit=100`)
+      
+      const response = await fetch(`${apiUrl}/api/users?limit=100`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
       
+      console.log('Response status:', response.status)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Response error:', errorData)
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`)
+      }
+      
       const data = await response.json()
+      console.log('Response data:', data)
       
       if (data.success) {
-        // Filter only salesmen
-        const salesmenList = (data.data || []).filter(u => u.role === 'salesman')
+        // Filter only salesmen with names
+        const salesmenList = (data.data || [])
+          .filter(u => u.role === 'salesman' && u.name)
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
         setSalesmen(salesmenList)
+        console.log('Loaded salesmen:', salesmenList.length, salesmenList)
+      } else {
+        console.error('Failed to load salesmen:', data.message || 'Unknown error')
+        setSalesmen([])
       }
     } catch (error) {
       console.error('Error loading salesmen:', error)
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      })
+      setSalesmen([])
     } finally {
       setLoadingSalesmen(false)
     }
@@ -55,10 +83,11 @@ function OwnerCalendar() {
   const loadEvents = async () => {
     try {
       setLoading(true)
+      const apiUrl = getApiUrl()
       const start = format(startOfMonth(currentDate), 'yyyy-MM-dd')
       const end = format(endOfMonth(currentDate), 'yyyy-MM-dd')
       
-      let url = `http://localhost:5000/api/calendar?startDate=${start}&endDate=${end}`
+      let url = `${apiUrl}/api/calendar?startDate=${start}&endDate=${end}`
       if (selectedSalesman) {
         url += `&salesman=${selectedSalesman}`
       }
@@ -84,7 +113,9 @@ function OwnerCalendar() {
 
   const handleEventClick = async (event) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/calendar/${event.id}`, {
+      const apiUrl = getApiUrl()
+      const eventId = event._id || event.id
+      const response = await fetch(`${apiUrl}/api/calendar/${eventId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -179,7 +210,9 @@ function OwnerCalendar() {
           >
             <option value="">All Salesmen</option>
             {loadingSalesmen ? (
-              <option value="">Loading...</option>
+              <option value="" disabled>Loading salesmen...</option>
+            ) : salesmen.length === 0 ? (
+              <option value="" disabled>No salesmen found</option>
             ) : (
               salesmen.map(salesman => (
                 <option key={salesman._id} value={salesman._id}>
@@ -226,7 +259,7 @@ function OwnerCalendar() {
                           style={{ backgroundColor: getEventColor(event, eventIndex, dayEvents) }}
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleEventClick({ id: event._id })
+                            handleEventClick(event)
                           }}
                           title={`${event.title} - ${event.createdBy?.name || 'Unknown'}`}
                         >
@@ -234,7 +267,18 @@ function OwnerCalendar() {
                         </div>
                       ))}
                       {dayEvents.length > 3 && (
-                        <div className="more-events">+{dayEvents.length - 3} more</div>
+                        <div 
+                          className="more-events"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedDayEvents(dayEvents)
+                            setSelectedDayDate(day)
+                            setShowAllEventsModal(true)
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          +{dayEvents.length - 3} more
+                        </div>
                       )}
                     </div>
                   </div>
@@ -244,6 +288,77 @@ function OwnerCalendar() {
           </div>
         )}
       </PageSection>
+
+      {/* All Events Modal */}
+      {showAllEventsModal && selectedDayEvents.length > 0 && (
+        <div className="modal-overlay" onClick={() => {
+          setShowAllEventsModal(false)
+          setSelectedDayEvents([])
+          setSelectedDayDate(null)
+        }}>
+          <div className="modal-content all-events-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>All Events - {selectedDayDate && format(selectedDayDate, 'MMMM d, yyyy')}</h2>
+              <button className="modal-close" onClick={() => {
+                setShowAllEventsModal(false)
+                setSelectedDayEvents([])
+                setSelectedDayDate(null)
+              }}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="all-events-list">
+                {selectedDayEvents.map((event, index) => (
+                  <div
+                    key={event._id}
+                    className="event-item"
+                    onClick={() => {
+                      setShowAllEventsModal(false)
+                      handleEventClick(event)
+                    }}
+                  >
+                    <div 
+                      className="event-color-indicator"
+                      style={{ backgroundColor: getEventColor(event, index, selectedDayEvents) }}
+                    ></div>
+                    <div className="event-item-content">
+                      <div className="event-item-title">{event.title}</div>
+                      <div className="event-item-details">
+                        {event.type === 'visit' && (
+                          <span className="event-item-type">Visit</span>
+                        )}
+                        {event.type === 'todo' && (
+                          <span className="event-item-type">Todo</span>
+                        )}
+                        {event.startTime && (
+                          <span className="event-item-time">{event.startTime}</span>
+                        )}
+                        {event.accountName && (
+                          <span className="event-item-account">{event.accountName}</span>
+                        )}
+                        {event.createdBy?.name && (
+                          <span className="event-item-salesman">Salesman: {event.createdBy.name}</span>
+                        )}
+                      </div>
+                      {event.description && (
+                        <div className="event-item-description">{event.description}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <SecondaryButton onClick={() => {
+                setShowAllEventsModal(false)
+                setSelectedDayEvents([])
+                setSelectedDayDate(null)
+              }}>
+                Close
+              </SecondaryButton>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Event Details Modal (View Only) */}
       {showEventDetailsModal && selectedEvent && (
