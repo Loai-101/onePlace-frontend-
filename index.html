@@ -8,14 +8,33 @@
     <script>
       // Suppress Sentry errors in console (harmless external service errors)
       const originalError = console.error;
+      const originalWarn = console.warn;
+      
       console.error = function(...args) {
         const message = args.join(' ');
         // Filter out Sentry-related errors
-        if (message.includes('sentry.io') || message.includes('Sentry') || message.includes('ingest.us.sentry')) {
+        if (message.includes('sentry.io') || message.includes('Sentry') || message.includes('ingest.us.sentry') || message.includes('o1100188.ingest.us.sentry')) {
           return; // Suppress Sentry errors
         }
         originalError.apply(console, args);
       };
+      
+      console.warn = function(...args) {
+        const message = args.join(' ');
+        // Filter out Sentry-related warnings
+        if (message.includes('sentry.io') || message.includes('Sentry') || message.includes('ingest.us.sentry')) {
+          return; // Suppress Sentry warnings
+        }
+        originalWarn.apply(console, args);
+      };
+      
+      // Suppress Sentry network errors
+      window.addEventListener('error', function(event) {
+        if (event.message && (event.message.includes('sentry.io') || event.message.includes('ingest.us.sentry'))) {
+          event.preventDefault();
+          return false;
+        }
+      }, true);
     </script>
   </head>
   <body>
