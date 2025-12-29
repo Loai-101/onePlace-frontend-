@@ -83,17 +83,10 @@ function MainLogin() {
       if (result.success) {
         const userRole = result.data.user.role
         
-        // Admin role should only login through AdminLogin page, not MainLogin
-        if (userRole === 'admin') {
-          setErrors({ 
-            general: 'Admin accounts must login through the Admin Panel. Please use /admin/login' 
-          })
-          setIsLoading(false)
-          return
-        }
-        
-        // Define role categories (admin excluded - they use separate login)
-        const companyRoles = ['owner']
+        // Define role categories
+        // Note: 'admin' role here refers to COMPANY admin (not platform admin)
+        // Company admins login through MainLogin, platform admins use AdminLogin
+        const companyRoles = ['owner', 'admin'] // Company owners and company admins
         const employeeRoles = ['salesman', 'accountant']
         
         // Validate login type matches user role
@@ -113,7 +106,8 @@ function MainLogin() {
           return
         }
         
-        // Clear any leftover admin tokens when regular user logs in
+        // Clear any leftover platform admin tokens when company/employee user logs in
+        // This ensures company admins don't access the control panel
         localStorage.removeItem('adminToken')
         localStorage.removeItem('adminData')
         

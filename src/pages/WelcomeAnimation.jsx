@@ -8,18 +8,18 @@ function WelcomeAnimation() {
   const [animationData, setAnimationData] = useState(null)
 
   const redirectToDashboard = () => {
-    // Check if admin is logged in (admin uses different token)
+    // Check if PLATFORM admin is logged in (uses AdminLogin, different token system)
     const adminToken = localStorage.getItem('adminToken')
     const adminData = localStorage.getItem('adminData')
     
-    // Only redirect to admin dashboard if both adminToken and adminData exist
-    // This ensures we don't redirect regular users to admin panel
+    // Only redirect to control panel if both adminToken and adminData exist
+    // This means they logged in through AdminLogin (platform admin)
     if (adminToken && adminData) {
       try {
         const admin = JSON.parse(adminData)
-        // Double check it's actually admin data
-        if (admin.role === 'admin' || admin.username) {
-          // Admin login - redirect to admin dashboard
+        // Double check it's actually platform admin data (has username field from Admin model)
+        if (admin.username) {
+          // Platform admin login - redirect to control panel
           navigate('/admin/dashboard')
           return
         }
@@ -29,22 +29,15 @@ function WelcomeAnimation() {
       }
     }
 
-    // Regular user login - get user role from localStorage
+    // Regular user login (company/employee) - get user role from localStorage
     const user = JSON.parse(localStorage.getItem('user') || '{}')
     const userRole = user.role
 
-    // Ensure we don't redirect admin role users from regular login to admin panel
-    // Admins should only access admin panel through AdminLogin
-    if (userRole === 'admin') {
-      // If admin logged in through regular login, clear tokens and redirect to admin login
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      navigate('/admin/login')
-      return
-    }
-
     // Redirect based on user role
-    if (userRole === 'owner') {
+    // Note: 'admin' role here is COMPANY admin (not platform admin)
+    // Company admins should access company dashboard, not control panel
+    if (userRole === 'owner' || userRole === 'admin') {
+      // Both owners and company admins go to company dashboard
       navigate('/dashboard/owner')
     } else if (userRole === 'accountant') {
       navigate('/dashboard/accountant')
