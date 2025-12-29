@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl } from '../../utils/security';
 import './AdminDashboard.css';
 import AdminManagement from './AdminManagement';
 import CompanyUpdateRequests from './CompanyUpdateRequests';
@@ -77,7 +78,7 @@ function AdminDashboard() {
       const token = localStorage.getItem('adminToken');
       
       // Load dashboard stats
-      const statsResponse = await fetch('http://localhost:5000/api/admin/dashboard', {
+      const statsResponse = await fetch(`${getApiUrl()}/api/admin/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -94,7 +95,7 @@ function AdminDashboard() {
       }
 
       // Load pending companies
-      const companiesResponse = await fetch('http://localhost:5000/api/admin/companies/pending', {
+      const companiesResponse = await fetch(`${getApiUrl()}/api/admin/companies/pending`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -122,7 +123,7 @@ function AdminDashboard() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/companies/${companyToApprove}/approve`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/companies/${companyToApprove}/approve`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -157,7 +158,7 @@ function AdminDashboard() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/companies/${selectedCompany._id}/reject`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/companies/${selectedCompany._id}/reject`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -199,7 +200,7 @@ function AdminDashboard() {
     // Load company users
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/companies/${company._id}/users`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/companies/${company._id}/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -242,7 +243,7 @@ function AdminDashboard() {
       }
 
       // Use the new combined endpoint
-      const response = await fetch(`http://localhost:5000/api/admin/companies/${selectedCompanyProfile._id}/update-status`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/companies/${selectedCompanyProfile._id}/update-status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -325,7 +326,7 @@ function AdminDashboard() {
   const loadAdmins = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/admins', {
+      const response = await fetch(`${getApiUrl()}/api/admin/admins`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -344,7 +345,7 @@ function AdminDashboard() {
   const handleCreateAdmin = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/admins', {
+      const response = await fetch(`${getApiUrl()}/api/admin/admins`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -385,7 +386,7 @@ function AdminDashboard() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/admins/${selectedAdmin._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/admins/${selectedAdmin._id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -419,7 +420,7 @@ function AdminDashboard() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/admins/${adminId}`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/admins/${adminId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

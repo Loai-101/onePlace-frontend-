@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -40,7 +41,7 @@ function MyOrders() {
   const loadOrders = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:5000/api/orders?limit=200', {
+      const response = await fetch(`${getApiUrl()}/api/orders?limit=200`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -67,7 +68,7 @@ function MyOrders() {
 
   const loadAccounts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/accounts', {
+      const response = await fetch(`${getApiUrl()}/api/accounts`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -200,7 +201,7 @@ function MyOrders() {
       const accountName = order.customer?.companyName || order.customer?.accountName
       
       // Fetch all accounts and find the matching one
-      const response = await fetch('http://localhost:5000/api/accounts', {
+      const response = await fetch(`${getApiUrl()}/api/accounts`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

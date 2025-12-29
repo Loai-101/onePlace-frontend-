@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -45,7 +46,7 @@ function Brands() {
   const loadBrands = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:5000/api/brands?includeInactive=true', {
+      const response = await fetch(`${getApiUrl()}/api/brands?includeInactive=true`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -95,7 +96,7 @@ function Brands() {
         logoUrl = await uploadImageToSupabase(logoFile)
       }
       
-      const response = await fetch('http://localhost:5000/api/brands', {
+      const response = await fetch(`${getApiUrl()}/api/brands`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -160,7 +161,7 @@ function Brands() {
         logoUrl = await uploadImageToSupabase(logoFile)
       }
       
-      const response = await fetch(`http://localhost:5000/api/brands/${selectedBrand._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/brands/${selectedBrand._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -206,7 +207,7 @@ function Brands() {
     setConfirmMessage(`Are you sure you want to delete "${brandName}"? This action cannot be undone.`)
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/brands/${brandId}`, {
+        const response = await fetch(`${getApiUrl()}/api/brands/${brandId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -240,7 +241,7 @@ function Brands() {
     setConfirmMessage(`Are you sure you want to ${action} "${brandName}"?`)
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/brands/${brandId}`, {
+        const response = await fetch(`${getApiUrl()}/api/brands/${brandId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -343,7 +344,7 @@ function Brands() {
       formData.append('image', file)
       formData.append('folder', 'brands')
 
-      const response = await fetch('http://localhost:5000/api/upload/image', {
+      const response = await fetch(`${getApiUrl()}/api/upload/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

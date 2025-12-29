@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -24,7 +25,7 @@ function OrderDetails() {
   const loadOrderDetails = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:5000/api/orders/${id}`, {
+      const response = await fetch(`${getApiUrl()}/api/orders/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -67,7 +68,7 @@ function OrderDetails() {
   const loadAccountDetails = async (accountName) => {
     try {
       setLoadingAccount(true)
-      const response = await fetch('http://localhost:5000/api/accounts', {
+      const response = await fetch(`${getApiUrl()}/api/accounts`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

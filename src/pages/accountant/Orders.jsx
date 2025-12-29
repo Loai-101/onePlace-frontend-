@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -62,7 +63,7 @@ function AccountantOrders() {
   const loadCompanyUsers = async () => {
     try {
       setLoadingUsers(true)
-      const response = await fetch(`http://localhost:5000/api/users/company/${user.company}`, {
+      const response = await fetch(`${getApiUrl()}/api/users/company/${user.company}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -84,7 +85,7 @@ function AccountantOrders() {
 
   const loadAccounts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/accounts', {
+      const response = await fetch(`${getApiUrl()}/api/accounts`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -112,8 +113,8 @@ function AccountantOrders() {
       }
       
       const url = params.toString() 
-        ? `http://localhost:5000/api/orders?${params.toString()}`
-        : 'http://localhost:5000/api/orders'
+        ? `${getApiUrl()}/api/orders?${params.toString()}`
+        : `${getApiUrl()}/api/orders`
       
       const response = await fetch(url, {
         headers: {
@@ -234,7 +235,7 @@ function AccountantOrders() {
       const accountName = order.customer?.companyName || order.customer?.accountName
       
       // Fetch all accounts and find the matching one
-      const response = await fetch('http://localhost:5000/api/accounts', {
+      const response = await fetch(`${getApiUrl()}/api/accounts`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -282,7 +283,7 @@ function AccountantOrders() {
     
     try {
       setUpdatingStatus(true)
-      const response = await fetch(`http://localhost:5000/api/orders/${selectedOrder._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/orders/${selectedOrder._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -337,7 +338,7 @@ function AccountantOrders() {
     }
     
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/${selectedOrder._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/orders/${selectedOrder._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -422,7 +423,7 @@ function AccountantOrders() {
       formData.append('file', pdfFile)
       formData.append('folder', 'invoices')
       
-      const uploadResponse = await fetch('http://localhost:5000/api/upload/pdf', {
+      const uploadResponse = await fetch(`${getApiUrl()}/api/upload/pdf`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -439,7 +440,7 @@ function AccountantOrders() {
       
       if (uploadData.success && uploadData.data) {
         // Update order with PDF URL
-        const updateResponse = await fetch(`http://localhost:5000/api/orders/${selectedOrder._id}`, {
+        const updateResponse = await fetch(`${getApiUrl()}/api/orders/${selectedOrder._id}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -528,7 +529,7 @@ function AccountantOrders() {
       const accountNames = [...new Set(orders.map(o => o.customer?.companyName || o.customer?.accountName).filter(Boolean))]
       for (const accountName of accountNames) {
         try {
-          const response = await fetch('http://localhost:5000/api/accounts', {
+          const response = await fetch(`${getApiUrl()}/api/accounts`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -838,7 +839,7 @@ function AccountantOrders() {
     
     try {
       setMarkingAsPaid(true)
-      const response = await fetch(`http://localhost:5000/api/orders/${order._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/orders/${order._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -862,7 +863,7 @@ function AccountantOrders() {
         // Reload account details if order details modal is open
         if (showOrderDetailsModal && selectedOrder?._id === order._id) {
           // Fetch updated order
-          const updatedOrderResponse = await fetch(`http://localhost:5000/api/orders/${order._id}`, {
+          const updatedOrderResponse = await fetch(`${getApiUrl()}/api/orders/${order._id}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'

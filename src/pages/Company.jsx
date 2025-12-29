@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { getApiUrl } from '../utils/security'
 import PageSection from '../components/PageSection.jsx'
 import './Company.css'
 
@@ -19,7 +20,7 @@ function Company() {
     try {
       setLoading(true)
       setError('')
-      const response = await fetch('http://localhost:5000/api/companies/me', {
+      const response = await fetch(`${getApiUrl()}/api/companies/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

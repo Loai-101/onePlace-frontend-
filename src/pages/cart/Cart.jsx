@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -84,7 +85,7 @@ function Cart() {
       const updatedCart = await Promise.all(cartWithVat.map(async (item) => {
         if (item.productId) {
           try {
-            const response = await fetch(`http://localhost:5000/api/products/${item.productId}`, {
+            const response = await fetch(`${getApiUrl()}/api/products/${item.productId}`, {
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -150,7 +151,7 @@ function Cart() {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/accounts', {
+        const response = await fetch(`${getApiUrl()}/api/accounts`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -240,7 +241,7 @@ function Cart() {
     // If stock is not stored in cart item, fetch it from API
     if (!item.stock && item.productId) {
       try {
-        const response = await fetch(`http://localhost:5000/api/products/${item.productId}`, {
+        const response = await fetch(`${getApiUrl()}/api/products/${item.productId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -342,7 +343,7 @@ function Cart() {
       // Fetch current stock if not available
       if (!item.stock && item.productId && token) {
         try {
-          const response = await fetch(`http://localhost:5000/api/products/${item.productId}`, {
+          const response = await fetch(`${getApiUrl()}/api/products/${item.productId}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -504,7 +505,7 @@ function Cart() {
       }
       
       // Send order to backend
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${getApiUrl()}/api/orders`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

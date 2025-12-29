@@ -22,7 +22,11 @@ cp .env.example .env
 
 3. Update the `.env` file with your API URL:
 ```
+# For local development
 VITE_API_URL=http://localhost:5000
+
+# For production (set in Vercel environment variables)
+# VITE_API_URL=https://oneplace-backend-0xjq.onrender.com
 ```
 
 ### Development

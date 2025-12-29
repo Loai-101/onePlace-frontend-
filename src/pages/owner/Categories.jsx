@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -50,7 +51,7 @@ function Categories() {
 
   const loadBrands = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/brands?includeInactive=true', {
+      const response = await fetch(`${getApiUrl()}/api/brands?includeInactive=true`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -68,7 +69,7 @@ function Categories() {
   const loadCategories = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:5000/api/categories?includeInactive=true', {
+      const response = await fetch(`${getApiUrl()}/api/categories?includeInactive=true`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -120,7 +121,7 @@ function Categories() {
         imageUrl = await uploadImageToSupabase(imageFile)
       }
       
-      const response = await fetch('http://localhost:5000/api/categories', {
+      const response = await fetch(`${getApiUrl()}/api/categories`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -165,7 +166,7 @@ function Categories() {
         imageUrl = await uploadImageToSupabase(imageFile)
       }
       
-      const response = await fetch(`http://localhost:5000/api/categories/${selectedCategory._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/categories/${selectedCategory._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -209,7 +210,7 @@ function Categories() {
     setConfirmMessage(`Are you sure you want to delete "${categoryName}"? This action cannot be undone.`)
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/categories/${categoryId}`, {
+        const response = await fetch(`${getApiUrl()}/api/categories/${categoryId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -243,7 +244,7 @@ function Categories() {
     setConfirmMessage(`Are you sure you want to ${action} "${categoryName}"?`)
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/categories/${categoryId}`, {
+        const response = await fetch(`${getApiUrl()}/api/categories/${categoryId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -346,7 +347,7 @@ function Categories() {
       formData.append('image', file)
       formData.append('folder', 'categories')
 
-      const response = await fetch('http://localhost:5000/api/upload/image', {
+      const response = await fetch(`${getApiUrl()}/api/upload/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -455,7 +456,7 @@ function Categories() {
       const formData = new FormData()
       formData.append('excelFile', excelFile)
 
-      const response = await fetch('http://localhost:5000/api/categories/bulk-import', {
+      const response = await fetch(`${getApiUrl()}/api/categories/bulk-import`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

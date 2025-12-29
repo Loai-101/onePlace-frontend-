@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -37,7 +38,7 @@ function Settings() {
   const loadCompany = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:5000/api/companies/me', {
+      const response = await fetch(`${getApiUrl()}/api/companies/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -182,7 +183,7 @@ function Settings() {
       formData.append('image', file)
       formData.append('folder', 'companies')
 
-      const response = await fetch('http://localhost:5000/api/upload/image', {
+      const response = await fetch(`${getApiUrl()}/api/upload/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -289,7 +290,7 @@ function Settings() {
         } : undefined
       }
 
-      const response = await fetch('http://localhost:5000/api/companies/me', {
+      const response = await fetch(`${getApiUrl()}/api/companies/me`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../../utils/security';
 import './AdminManagement.css';
 
 function AdminManagement({ onClose }) {
@@ -26,7 +27,7 @@ function AdminManagement({ onClose }) {
   const loadAdmins = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/admins', {
+      const response = await fetch(`${getApiUrl()}/api/admin/admins`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -45,7 +46,7 @@ function AdminManagement({ onClose }) {
   const handleCreateAdmin = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/admins', {
+      const response = await fetch(`${getApiUrl()}/api/admin/admins`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -85,7 +86,7 @@ function AdminManagement({ onClose }) {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/admins/${selectedAdmin._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/admins/${selectedAdmin._id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -118,7 +119,7 @@ function AdminManagement({ onClose }) {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/admins/${adminId}`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/admins/${adminId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

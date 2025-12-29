@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -74,7 +75,7 @@ function AccountantDashboard() {
       
       // Load orders for analytics (fetch enough for charts - up to 1 year of data)
       // We'll calculate statistics from orders data to reduce API calls (saves 1 request)
-      const ordersResponse = await fetch('http://localhost:5000/api/orders?limit=200&sort=createdAt&order=desc', {
+      const ordersResponse = await fetch(`${getApiUrl()}/api/orders?limit=200&sort=createdAt&order=desc`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -102,7 +102,7 @@ function Accounts() {
 
   const loadMedicalBranches = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/accounts/branches', {
+      const response = await fetch(`${getApiUrl()}/api/accounts/branches`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -121,7 +121,7 @@ function Accounts() {
 
   const loadSpecializations = async (branch) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/accounts/specializations/${branch}`, {
+      const response = await fetch(`${getApiUrl()}/api/accounts/specializations/${branch}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -215,7 +215,7 @@ function Accounts() {
           // Load specializations if branch exists
           if (staffMember.medicalBranch) {
             try {
-              const response = await fetch(`http://localhost:5000/api/accounts/specializations/${staffMember.medicalBranch}`, {
+              const response = await fetch(`${getApiUrl()}/api/accounts/specializations/${staffMember.medicalBranch}`, {
                 headers: {
                   'Authorization': `Bearer ${token}`,
                   'Content-Type': 'application/json'
@@ -337,8 +337,8 @@ function Accounts() {
 
     try {
       const url = selectedAccount 
-        ? `http://localhost:5000/api/accounts/${selectedAccount._id}`
-        : 'http://localhost:5000/api/accounts'
+        ? `${getApiUrl()}/api/accounts/${selectedAccount._id}`
+        : `${getApiUrl()}/api/accounts`
       
       const method = selectedAccount ? 'PUT' : 'POST'
 
@@ -409,7 +409,7 @@ function Accounts() {
     setConfirmMessage(`Are you sure you want to delete "${account.name}"? This action cannot be undone.`)
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/accounts/${account._id}`, {
+        const response = await fetch(`${getApiUrl()}/api/accounts/${account._id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -440,7 +440,7 @@ function Accounts() {
     setConfirmMessage(`Are you sure you want to ${account.isActive ? 'deactivate' : 'activate'} "${account.name}"?`)
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/accounts/${account._id}/toggle-status`, {
+        const response = await fetch(`${getApiUrl()}/api/accounts/${account._id}/toggle-status`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -567,7 +567,7 @@ function Accounts() {
       const formData = new FormData()
       formData.append('file', excelFile)
 
-      const response = await fetch('http://localhost:5000/api/accounts/bulk-import', {
+      const response = await fetch(`${getApiUrl()}/api/accounts/bulk-import`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -1051,7 +1051,7 @@ function Accounts() {
                           // Load specializations for this branch
                           if (branch) {
                             try {
-                              const response = await fetch(`http://localhost:5000/api/accounts/specializations/${branch}`, {
+                              const response = await fetch(`${getApiUrl()}/api/accounts/specializations/${branch}`, {
                                 headers: {
                                   'Authorization': `Bearer ${token}`,
                                   'Content-Type': 'application/json'

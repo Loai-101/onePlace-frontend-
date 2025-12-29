@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import './Catalog.css'
@@ -23,7 +24,7 @@ function Catalog() {
       if (!token) return
 
       try {
-        const response = await fetch('http://localhost:5000/api/accounts', {
+        const response = await fetch(`${getApiUrl()}/api/accounts`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -90,7 +91,7 @@ function Catalog() {
       if (!token) return
 
       try {
-        const response = await fetch('http://localhost:5000/api/categories', {
+        const response = await fetch(`${getApiUrl()}/api/categories`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -132,7 +133,7 @@ function Catalog() {
       if (!token) return
 
       try {
-        const response = await fetch('http://localhost:5000/api/brands', {
+        const response = await fetch(`${getApiUrl()}/api/brands`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -170,7 +171,7 @@ function Catalog() {
       if (!token) return
 
       try {
-        const response = await fetch('http://localhost:5000/api/products?limit=1000&status=active', {
+        const response = await fetch(`${getApiUrl()}/api/products?limit=1000&status=active`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

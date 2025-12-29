@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -58,7 +59,7 @@ function ProductForm() {
   const loadProduct = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${getApiUrl()}/api/products/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -106,7 +107,7 @@ function ProductForm() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/categories?includeInactive=false', {
+      const response = await fetch(`${getApiUrl()}/api/categories?includeInactive=false`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -123,7 +124,7 @@ function ProductForm() {
 
   const loadBrands = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/brands?includeInactive=false', {
+      const response = await fetch(`${getApiUrl()}/api/brands?includeInactive=false`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -193,7 +194,7 @@ function ProductForm() {
       formData.append('image', file)
       formData.append('folder', 'products')
 
-      const response = await fetch('http://localhost:5000/api/upload/image', {
+      const response = await fetch(`${getApiUrl()}/api/upload/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -274,8 +275,8 @@ function ProductForm() {
       delete payload.discountPercent
 
       const url = isEdit 
-        ? `http://localhost:5000/api/products/${id}`
-        : 'http://localhost:5000/api/products'
+        ? `${getApiUrl()}/api/products/${id}`
+        : `${getApiUrl()}/api/products`
       
       const method = isEdit ? 'PUT' : 'POST'
 

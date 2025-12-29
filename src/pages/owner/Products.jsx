@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -150,7 +151,7 @@ function Products() {
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:5000/api/products', {
+      const response = await fetch(`${getApiUrl()}/api/products`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -176,7 +177,7 @@ function Products() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/categories?includeInactive=false', {
+      const response = await fetch(`${getApiUrl()}/api/categories?includeInactive=false`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -197,7 +198,7 @@ function Products() {
 
   const loadBrands = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/brands?includeInactive=false', {
+      const response = await fetch(`${getApiUrl()}/api/brands?includeInactive=false`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -242,7 +243,7 @@ function Products() {
     setConfirmMessage(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+        const response = await fetch(`${getApiUrl()}/api/products/${productId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -277,7 +278,7 @@ function Products() {
     setConfirmMessage(`Are you sure you want to ${action} "${productName}"?`)
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+        const response = await fetch(`${getApiUrl()}/api/products/${productId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -479,7 +480,7 @@ function Products() {
       const formData = new FormData()
       formData.append('excelFile', excelFile)
 
-      const response = await fetch('http://localhost:5000/api/products/bulk-import', {
+      const response = await fetch(`${getApiUrl()}/api/products/bulk-import`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -559,7 +560,7 @@ function Products() {
       formData.append('image', file)
       formData.append('folder', 'products')
 
-      const response = await fetch('http://localhost:5000/api/upload/image', {
+      const response = await fetch(`${getApiUrl()}/api/upload/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -645,8 +646,8 @@ function Products() {
       delete payload.discountPercent
 
       const url = editingProduct
-        ? `http://localhost:5000/api/products/${editingProduct._id}`
-        : 'http://localhost:5000/api/products'
+        ? `${getApiUrl()}/api/products/${editingProduct._id}`
+        : `${getApiUrl()}/api/products`
       
       const method = editingProduct ? 'PUT' : 'POST'
 

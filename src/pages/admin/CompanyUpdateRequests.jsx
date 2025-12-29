@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getApiUrl } from '../../utils/security'
 import './CompanyUpdateRequests.css'
 
 function CompanyUpdateRequests() {
@@ -28,8 +29,8 @@ function CompanyUpdateRequests() {
       setLoading(true)
       const token = localStorage.getItem('adminToken')
       const url = filter === 'all' 
-        ? 'http://localhost:5000/api/admin/company-update-requests'
-        : `http://localhost:5000/api/admin/company-update-requests?status=${filter}`
+        ? `${getApiUrl()}/api/admin/company-update-requests`
+        : `${getApiUrl()}/api/admin/company-update-requests?status=${filter}`
       
       const response = await fetch(url, {
         headers: {
@@ -56,7 +57,7 @@ function CompanyUpdateRequests() {
   const handleApprove = async (requestId) => {
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await fetch(`http://localhost:5000/api/admin/company-update-requests/${requestId}/approve`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/company-update-requests/${requestId}/approve`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -86,7 +87,7 @@ function CompanyUpdateRequests() {
     
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await fetch(`http://localhost:5000/api/admin/company-update-requests/${selectedRequest._id}/reject`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/company-update-requests/${selectedRequest._id}/reject`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -119,7 +120,7 @@ function CompanyUpdateRequests() {
     try {
       // Fetch full request details to get changedFields
       const token = localStorage.getItem('adminToken')
-      const response = await fetch(`http://localhost:5000/api/admin/company-update-requests/${request._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/company-update-requests/${request._id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

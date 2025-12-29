@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl } from '../../utils/security';
 import './AdminLogin.css';
 
 function AdminLogin() {
@@ -33,7 +34,7 @@ function AdminLogin() {
     setErrors({});
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/login', {
+      const response = await fetch(`${getApiUrl()}/api/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

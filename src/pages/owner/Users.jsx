@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -54,7 +55,7 @@ function Users() {
   const loadUsers = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:5000/api/user-management', {
+      const response = await fetch(`${getApiUrl()}/api/user-management`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -113,7 +114,7 @@ function Users() {
     e.preventDefault()
     
     try {
-      const response = await fetch('http://localhost:5000/api/user-management', {
+      const response = await fetch(`${getApiUrl()}/api/user-management`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -145,7 +146,7 @@ function Users() {
     e.preventDefault()
     
     try {
-      const response = await fetch(`http://localhost:5000/api/user-management/${selectedUser._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/user-management/${selectedUser._id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -196,7 +197,7 @@ function Users() {
     setConfirmMessage('Are you sure you want to change this user\'s status?')
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/user-management/${userId}/toggle-status`, {
+        const response = await fetch(`${getApiUrl()}/api/user-management/${userId}/toggle-status`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -237,7 +238,7 @@ function Users() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/user-management/${selectedUser._id}/reset-password`, {
+      const response = await fetch(`${getApiUrl()}/api/user-management/${selectedUser._id}/reset-password`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -270,7 +271,7 @@ function Users() {
     setConfirmMessage('Are you sure you want to delete this user? This action cannot be undone.')
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/user-management/${userId}`, {
+        const response = await fetch(`${getApiUrl()}/api/user-management/${userId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -299,7 +300,7 @@ function Users() {
 
   const handleViewProfile = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/user-management/${userId}`, {
+      const response = await fetch(`${getApiUrl()}/api/user-management/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
