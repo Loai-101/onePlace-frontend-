@@ -34,6 +34,8 @@ function AdminDashboard() {
   const [successMessage, setSuccessMessage] = useState('');
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [companyToApprove, setCompanyToApprove] = useState(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isSavingStatus, setIsSavingStatus] = useState(false);
   const [admins, setAdmins] = useState([]);
   const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
   const [showEditAdminModal, setShowEditAdminModal] = useState(false);
@@ -121,6 +123,7 @@ function AdminDashboard() {
   const confirmApprove = async () => {
     if (!companyToApprove) return;
 
+    setIsApproving(true);
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`${getApiUrl()}/api/admin/companies/${companyToApprove}/approve`, {
@@ -132,18 +135,41 @@ function AdminDashboard() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        
+        // Update companies list immediately (optimistic update)
+        setCompanies(prevCompanies => 
+          prevCompanies.filter(company => company._id !== companyToApprove)
+        );
+        
+        // Update stats if available
+        if (stats) {
+          setStats(prevStats => ({
+            ...prevStats,
+            statistics: {
+              ...prevStats.statistics,
+              pendingCompanies: Math.max(0, (prevStats.statistics.pendingCompanies || 0) - 1),
+              approvedCompanies: (prevStats.statistics.approvedCompanies || 0) + 1
+            }
+          }));
+        }
+        
         setSuccessMessage('Company approved successfully! Email notification sent to company.');
         setShowSuccessPopup(true);
         setShowApproveConfirm(false);
         setCompanyToApprove(null);
-        loadDashboardData(); // Refresh data
+        
+        // Refresh data in background
+        loadDashboardData();
       } else {
         const data = await response.json();
-        alert(`Error: ${data.message}`);
+        alert(`Error: ${data.message || 'Failed to approve company'}`);
       }
     } catch (error) {
       console.error('Error approving company:', error);
-      alert('Error approving company');
+      alert('Error approving company. Please try again.');
+    } finally {
+      setIsApproving(false);
     }
   };
 
@@ -229,6 +255,7 @@ function AdminDashboard() {
   const handleStatusChange = async () => {
     if (!selectedCompanyProfile) return;
 
+    setIsSavingStatus(true);
     try {
       const token = localStorage.getItem('adminToken');
       
@@ -259,7 +286,7 @@ function AdminDashboard() {
       if (response.ok) {
         const data = await response.json();
         
-        // Success - update local state
+        // Success - update local state immediately
         const message = data.message || 'Company status updated successfully!';
         setSuccessMessage(message);
         setShowSuccessPopup(true);
@@ -270,15 +297,27 @@ function AdminDashboard() {
             company._id === selectedCompanyProfile._id 
               ? { 
                   ...company, 
-                  status: data.data.company.status,
+                  status: data.data?.company?.status || companyStatus,
                   owner: { 
                     ...company.owner, 
-                    isActive: data.data.company.ownerStatus === 'active' 
-                  } 
+                    isActive: data.data?.company?.ownerStatus === 'active' || accountStatus === 'active'
+                  },
+                  numberOfUsers: hasNumberOfUsersChange ? numberOfUsers : company.numberOfUsers
                 }
               : company
           )
         );
+        
+        // Update selected company profile state
+        setSelectedCompanyProfile(prev => ({
+          ...prev,
+          status: data.data?.company?.status || companyStatus,
+          owner: {
+            ...prev.owner,
+            isActive: data.data?.company?.ownerStatus === 'active' || accountStatus === 'active'
+          },
+          numberOfUsers: hasNumberOfUsersChange ? numberOfUsers : prev.numberOfUsers
+        }));
         
         // Update stats if it contains recent companies
         if (stats?.recentCompanies) {
@@ -288,10 +327,10 @@ function AdminDashboard() {
               company._id === selectedCompanyProfile._id 
                 ? { 
                     ...company, 
-                    status: data.data.company.status,
+                    status: data.data?.company?.status || companyStatus,
                     owner: { 
                       ...company.owner, 
-                      isActive: data.data.company.ownerStatus === 'active' 
+                      isActive: data.data?.company?.ownerStatus === 'active' || accountStatus === 'active'
                     } 
                   }
                 : company
@@ -299,20 +338,20 @@ function AdminDashboard() {
           }));
         }
         
-        closeCompanyProfile(); // Close modal
-        
-        // Auto-hide popup after 3 seconds
+        // Close the modal after a short delay to show success message
         setTimeout(() => {
-          setShowSuccessPopup(false);
-        }, 3000);
+          setShowCompanyProfile(false);
+          setSelectedCompanyProfile(null);
+        }, 1500);
       } else {
-        const data = await response.json();
-        alert(`Error: ${data.message}`);
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || 'Failed to update company status'}`);
       }
-
     } catch (error) {
-      console.error('Error changing status:', error);
-      alert('Error changing status');
+      console.error('Error updating company status:', error);
+      alert('Error updating company status. Please try again.');
+    } finally {
+      setIsSavingStatus(false);
     }
   };
 
@@ -980,8 +1019,12 @@ function AdminDashboard() {
               <button className="cancel-btn" onClick={() => setShowApproveConfirm(false)}>
                 Cancel
               </button>
-              <button className="confirm-approve-btn" onClick={confirmApprove}>
-                ✅ Approve Company
+              <button 
+                className="confirm-approve-btn" 
+                onClick={confirmApprove}
+                disabled={isApproving}
+              >
+                {isApproving ? '⏳ Approving...' : '✅ Approve Company'}
               </button>
             </div>
           </div>
@@ -1199,12 +1242,13 @@ function AdminDashboard() {
               <button className="cancel-btn" onClick={closeCompanyProfile}>
                 Close
               </button>
-                <button 
-                  className="save-account-btn" 
-                  onClick={handleStatusChange}
-                >
-                  💾 Save Changes
-                </button>
+              <button 
+                className="save-account-btn" 
+                onClick={handleStatusChange}
+                disabled={isSavingStatus}
+              >
+                {isSavingStatus ? '💾 Saving...' : '💾 Save Changes'}
+              </button>
             </div>
           </div>
         </div>

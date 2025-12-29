@@ -731,8 +731,12 @@ function CompanySignup() {
               <h3>Registration Successful!</h3>
             </div>
             <div className="success-popup-content">
-              <p>Company registration submitted successfully!</p>
-              <p>You will receive an email once approved.</p>
+              <p><strong>Company registration submitted successfully!</strong></p>
+              <p>Your request is under review by our admin team.</p>
+              <p>You will receive an email notification once your company is approved.</p>
+              <p style={{marginTop: '15px', fontSize: '0.9em', color: '#666'}}>
+                Please check your email ({formData.companyEmail}) for updates.
+              </p>
             </div>
             <div className="success-popup-actions">
               <PrimaryButton onClick={handleSuccessPopupClose}>

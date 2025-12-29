@@ -113,7 +113,19 @@ function MainLogin() {
           navigate('/dashboard')
         }
       } else {
-        setErrors({ general: result.error })
+        // Handle specific error messages
+        let errorMessage = result.error || 'Login failed'
+        
+        // Check if it's a company approval issue
+        if (result.data?.companyStatus) {
+          if (result.data.companyStatus === 'pending') {
+            errorMessage = 'Your company registration is pending approval. Please wait for admin approval before logging in. You will receive an email notification once approved.'
+          } else if (result.data.companyStatus === 'rejected') {
+            errorMessage = 'Your company registration was rejected. Please contact support for more information.'
+          }
+        }
+        
+        setErrors({ general: errorMessage })
       }
     } catch (error) {
       console.error('Login error:', error)

@@ -95,7 +95,15 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(data.user))
         return { success: true, data }
       } else {
-        return { success: false, error: data.message || 'Login failed' }
+        // Return error with additional data for better error handling
+        return { 
+          success: false, 
+          error: data.message || 'Login failed',
+          data: {
+            companyStatus: data.companyStatus,
+            ...data
+          } // Include full response data for company status checks
+        }
       }
     } catch (error) {
       console.error('Login error:', error)
