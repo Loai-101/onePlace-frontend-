@@ -933,12 +933,12 @@ function Catalog() {
                               View Only
                             </button>
                           ) : (
-                            <button 
-                              className="add-to-cart-btn"
-                              onClick={() => handleAddToCart(product)}
-                            >
-                              Add to Cart
-                            </button>
+                          <button 
+                            className="add-to-cart-btn"
+                            onClick={() => handleAddToCart(product)}
+                          >
+                            Add to Cart
+                          </button>
                           )}
                         </div>
                       </div>
@@ -1063,12 +1063,12 @@ function Catalog() {
                                 View Only
                               </button>
                             ) : (
-                              <button 
-                                className="add-to-cart-btn"
-                                onClick={() => handleAddToCart(product)}
-                              >
-                                Add to Cart
-                              </button>
+                            <button 
+                              className="add-to-cart-btn"
+                              onClick={() => handleAddToCart(product)}
+                            >
+                              Add to Cart
+                            </button>
                             )}
                           </div>
                         </div>
