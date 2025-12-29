@@ -64,7 +64,19 @@ function AccountantOrders() {
   const loadCompanyUsers = async () => {
     try {
       setLoadingUsers(true)
-      const response = await fetch(`${getApiUrl()}/api/users/company/${user.company}`, {
+      // Extract company ID - handle both object and string formats
+      const companyId = typeof user.company === 'object' 
+        ? (user.company._id || user.company)
+        : user.company
+      
+      if (!companyId) {
+        console.error('Company ID not found')
+        setCompanyUsers([])
+        setLoadingUsers(false)
+        return
+      }
+      
+      const response = await fetch(`${getApiUrl()}/api/users/company/${companyId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
