@@ -104,6 +104,14 @@ function Sidebar({ isOpen, setIsOpen }) {
           </li>
           <li>
             <Link 
+              to="/dashboard/catalog" 
+              className={location.pathname === '/dashboard/catalog' ? 'active' : ''}
+            >
+              Menu
+            </Link>
+          </li>
+          <li>
+            <Link 
               to="/dashboard/owner/products" 
               className={location.pathname.startsWith('/dashboard/owner/products') ? 'active' : ''}
             >
@@ -136,36 +144,28 @@ function Sidebar({ isOpen, setIsOpen }) {
           </li>
           <li>
             <Link 
-              to="/dashboard/owner/settings" 
-              className={location.pathname === '/dashboard/owner/settings' ? 'active' : ''}
-            >
-              Settings
-            </Link>
-          </li>
-          <li>
-            <Link 
               to="/dashboard/owner/accounts" 
               className={location.pathname.startsWith('/dashboard/owner/accounts') ? 'active' : ''}
             >
               Accounts
             </Link>
           </li>
-              <li>
-                <Link 
-                  to="/dashboard/owner/calendar" 
-                  className={location.pathname === '/dashboard/owner/calendar' ? 'active' : ''}
-                >
-                  Calendar
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/dashboard/catalog" 
-                  className={location.pathname === '/dashboard/catalog' ? 'active' : ''}
-                >
-                  Menu
-                </Link>
-              </li>
+          <li>
+            <Link 
+              to="/dashboard/owner/calendar" 
+              className={location.pathname === '/dashboard/owner/calendar' ? 'active' : ''}
+            >
+              Calendar
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/dashboard/owner/settings" 
+              className={location.pathname === '/dashboard/owner/settings' ? 'active' : ''}
+            >
+              Settings
+            </Link>
+          </li>
         </ul>
       </div>
         )}
