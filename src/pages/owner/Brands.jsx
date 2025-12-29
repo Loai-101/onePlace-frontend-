@@ -383,7 +383,9 @@ function Brands() {
     return (
       <div className="brands-page">
         <h1 className="page-title">Brand Management</h1>
-        <Loading message="Loading brands..." />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loading message="Loading brands..." />
+        </div>
       </div>
     )
   }

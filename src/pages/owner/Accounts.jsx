@@ -663,7 +663,9 @@ function Accounts() {
     return (
       <div className="accounts-page">
         <h1 className="page-title">Account Management</h1>
-        <Loading message="Loading accounts..." />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loading message="Loading accounts..." />
+        </div>
       </div>
     )
   }

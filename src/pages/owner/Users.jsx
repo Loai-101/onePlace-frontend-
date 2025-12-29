@@ -392,7 +392,9 @@ function Users() {
         <div className="page-header">
           <h1 className="page-title">User Management</h1>
         </div>
-        <Loading message="Loading users..." />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loading message="Loading users..." />
+        </div>
       </div>
     )
   }

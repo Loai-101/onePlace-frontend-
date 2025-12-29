@@ -501,7 +501,9 @@ function Categories() {
     return (
       <div className="categories-page">
         <h1 className="page-title">Category Management</h1>
-        <Loading message="Loading categories..." />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loading message="Loading categories..." />
+        </div>
       </div>
     )
   }
