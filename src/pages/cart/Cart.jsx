@@ -7,6 +7,7 @@ import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import SuccessAnimation from '../../components/SuccessAnimation.jsx'
+import Loading from '../../components/Loading.jsx'
 import './Cart.css'
 
 function Cart() {
@@ -14,6 +15,7 @@ function Cart() {
   const { token, user } = useAuth()
   const [cartItems, setCartItems] = useState([])
   const [accounts, setAccounts] = useState([]) // Store accounts data
+  const [loading, setLoading] = useState(true)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   const [sendingOrder, setSendingOrder] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -75,6 +77,7 @@ function Cart() {
 
   // Load and group cart items with stock validation
   const loadAndGroupCart = async () => {
+    setLoading(true)
     const savedCart = JSON.parse(localStorage.getItem('shoppingCart') || '[]')
     // Ensure all cart items have vatRate field (default to 0 for old items)
     let cartWithVat = savedCart.map(item => ({
@@ -130,6 +133,7 @@ function Cart() {
     if (JSON.stringify(savedCart) !== JSON.stringify(groupedCart)) {
       localStorage.setItem('shoppingCart', JSON.stringify(groupedCart))
     }
+    setLoading(false)
   }
 
   // Load cart items from localStorage on component mount
@@ -609,6 +613,17 @@ function Cart() {
   // Cancel remove item
   const cancelRemoveItem = () => {
     setShowRemovePopup({ show: false, item: null })
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <h1 className="page-title">Shopping Cart</h1>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loading message="Loading cart..." />
+        </div>
+      </div>
+    )
   }
 
   return (
