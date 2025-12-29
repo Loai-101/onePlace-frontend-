@@ -52,9 +52,20 @@ function ProductForm() {
       loadBrands()
       if (isEdit) {
         loadProduct()
+      } else {
+        // Generate default SKU for new products
+        const generateDefaultSKU = () => {
+          const timestamp = Date.now().toString(36).toUpperCase()
+          const random = Math.random().toString(36).substring(2, 6).toUpperCase()
+          return `SKU-${timestamp}-${random}`
+        }
+        setFormData(prev => ({
+          ...prev,
+          sku: generateDefaultSKU()
+        }))
       }
     }
-  }, [token, id])
+  }, [token, id, isEdit])
 
   const loadProduct = async () => {
     try {
