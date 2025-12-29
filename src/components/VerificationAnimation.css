@@ -12,6 +12,16 @@
   animation: fadeIn 0.3s ease-in;
 }
 
+.verification-animation-container.inline {
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: auto;
+  background: transparent;
+  z-index: 1;
+  animation: fadeIn 0.3s ease-in;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

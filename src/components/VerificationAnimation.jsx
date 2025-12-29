@@ -6,7 +6,8 @@ function VerificationAnimation({
   message = 'Verifying...', 
   onComplete, 
   duration = 2000,
-  size = 'medium' 
+  size = 'medium',
+  inline = false 
 }) {
   const [animationData, setAnimationData] = useState(null)
   const [show, setShow] = useState(true)
@@ -39,7 +40,7 @@ function VerificationAnimation({
   }
 
   return (
-    <div className="verification-animation-container">
+    <div className={`verification-animation-container ${inline ? 'inline' : ''}`}>
       <div className={`verification-animation-content ${size}`}>
         <Lottie 
           animationData={animationData}

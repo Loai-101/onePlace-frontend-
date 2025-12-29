@@ -132,25 +132,31 @@ function MainLogin() {
 
   return (
     <div className="main-login-container">
-      {/* Verification Animation */}
-      {showVerification && (
-        <VerificationAnimation
-          message="Verifying credentials..."
-          duration={2000}
-          onComplete={() => {
-            setShowVerification(false)
-            navigate('/welcome')
-          }}
-        />
-      )}
-
       <div className="main-login-background">
         <div className="main-login-overlay"></div>
       </div>
       
       <div className="main-login-content">
         <div className="main-login-form">
-          <div className="main-login-header">
+          {/* Verification Animation - Inline within login form */}
+          {showVerification && (
+            <div className="verification-inline-wrapper">
+              <VerificationAnimation
+                message="Verifying credentials..."
+                duration={2000}
+                inline={true}
+                size="small"
+                onComplete={() => {
+                  setShowVerification(false)
+                  navigate('/welcome')
+                }}
+              />
+            </div>
+          )}
+          
+          {!showVerification && (
+            <>
+              <div className="main-login-header">
             <div className="main-login-logo-section">
               <img 
                 src="https://res.cloudinary.com/dvybb2xnc/image/upload/v1759838355/OP_Logo_ec0wjg.png" 
@@ -251,6 +257,8 @@ function MainLogin() {
                 </div>
               </form>
             </>
+          )}
+          </>
           )}
         </div>
       </div>
