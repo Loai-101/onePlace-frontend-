@@ -150,6 +150,8 @@ function AdminLogin() {
         <div className="admin-login-footer">
           <p>Admin access only. Unauthorized access is prohibited.</p>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
