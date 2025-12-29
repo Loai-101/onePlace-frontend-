@@ -204,14 +204,6 @@
   display: inline-block;
 }
 
-/* Quick Actions */
-.quick-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-}
-
 /* Low Stock Table */
 .low-stock-table-container {
   background: white;

@@ -927,27 +927,6 @@ function OwnerDashboard() {
         </PageSection>
       </div>
 
-      {/* Quick Actions */}
-      <PageSection title="Quick Actions">
-        <div className="quick-actions">
-          <PrimaryButton to="/dashboard/owner/products/new">
-            Add New Product
-          </PrimaryButton>
-          <SecondaryButton to="/dashboard/owner/products">
-            Manage Products
-          </SecondaryButton>
-          <SecondaryButton to="/dashboard/owner/users">
-            Manage Users
-          </SecondaryButton>
-          <SecondaryButton to="/dashboard/owner/accounts">
-            Manage Accounts
-          </SecondaryButton>
-          <SecondaryButton onClick={() => loadDashboardData(true)}>
-            Refresh Data
-          </SecondaryButton>
-        </div>
-      </PageSection>
-      
       {/* Low Stock Alerts */}
       <PageSection title="Low Stock Alerts">
         {lowStockProducts.length === 0 ? (
