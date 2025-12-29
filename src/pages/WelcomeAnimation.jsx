@@ -10,19 +10,41 @@ function WelcomeAnimation() {
   const redirectToDashboard = () => {
     // Check if admin is logged in (admin uses different token)
     const adminToken = localStorage.getItem('adminToken')
+    const adminData = localStorage.getItem('adminData')
     
-    if (adminToken) {
-      // Admin login - redirect to admin dashboard
-      navigate('/admin/dashboard')
-      return
+    // Only redirect to admin dashboard if both adminToken and adminData exist
+    // This ensures we don't redirect regular users to admin panel
+    if (adminToken && adminData) {
+      try {
+        const admin = JSON.parse(adminData)
+        // Double check it's actually admin data
+        if (admin.role === 'admin' || admin.username) {
+          // Admin login - redirect to admin dashboard
+          navigate('/admin/dashboard')
+          return
+        }
+      } catch (e) {
+        // Invalid admin data, treat as regular user
+        console.log('Invalid admin data, treating as regular user')
+      }
     }
 
     // Regular user login - get user role from localStorage
     const user = JSON.parse(localStorage.getItem('user') || '{}')
     const userRole = user.role
 
+    // Ensure we don't redirect admin role users from regular login to admin panel
+    // Admins should only access admin panel through AdminLogin
+    if (userRole === 'admin') {
+      // If admin logged in through regular login, clear tokens and redirect to admin login
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      navigate('/admin/login')
+      return
+    }
+
     // Redirect based on user role
-    if (userRole === 'owner' || userRole === 'admin') {
+    if (userRole === 'owner') {
       navigate('/dashboard/owner')
     } else if (userRole === 'accountant') {
       navigate('/dashboard/accountant')
@@ -49,29 +71,7 @@ function WelcomeAnimation() {
     if (animationData) {
       // Show animation for 3 seconds, then redirect
       const timer = setTimeout(() => {
-        // Check if admin is logged in (admin uses different token)
-        const adminToken = localStorage.getItem('adminToken')
-        
-        if (adminToken) {
-          // Admin login - redirect to admin dashboard
-          navigate('/admin/dashboard')
-          return
-        }
-
-        // Regular user login - get user role from localStorage
-        const user = JSON.parse(localStorage.getItem('user') || '{}')
-        const userRole = user.role
-
-        // Redirect based on user role
-        if (userRole === 'owner' || userRole === 'admin') {
-          navigate('/dashboard/owner')
-        } else if (userRole === 'accountant') {
-          navigate('/dashboard/accountant')
-        } else if (userRole === 'salesman') {
-          navigate('/dashboard')
-        } else {
-          navigate('/dashboard')
-        }
+        redirectToDashboard()
       }, 3000) // 3 seconds
 
       return () => clearTimeout(timer)

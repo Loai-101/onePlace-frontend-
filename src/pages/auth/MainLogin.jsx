@@ -83,8 +83,17 @@ function MainLogin() {
       if (result.success) {
         const userRole = result.data.user.role
         
-        // Define role categories
-        const companyRoles = ['owner', 'admin']
+        // Admin role should only login through AdminLogin page, not MainLogin
+        if (userRole === 'admin') {
+          setErrors({ 
+            general: 'Admin accounts must login through the Admin Panel. Please use /admin/login' 
+          })
+          setIsLoading(false)
+          return
+        }
+        
+        // Define role categories (admin excluded - they use separate login)
+        const companyRoles = ['owner']
         const employeeRoles = ['salesman', 'accountant']
         
         // Validate login type matches user role
@@ -103,6 +112,10 @@ function MainLogin() {
           setIsLoading(false)
           return
         }
+        
+        // Clear any leftover admin tokens when regular user logs in
+        localStorage.removeItem('adminToken')
+        localStorage.removeItem('adminData')
         
         // If validation passes, show verification animation
         setIsLoading(false)

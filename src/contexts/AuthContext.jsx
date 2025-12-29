@@ -89,6 +89,10 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json()
 
       if (response.ok) {
+        // Clear any leftover admin tokens when regular user logs in
+        localStorage.removeItem('adminToken')
+        localStorage.removeItem('adminData')
+        
         setToken(data.token)
         setUser(data.user)
         localStorage.setItem('token', data.token)
