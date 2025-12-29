@@ -43,6 +43,14 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.verification-inline-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  padding: 2rem 0;
+}
+
 .admin-login-header {
   text-align: center;
   margin-bottom: 40px;

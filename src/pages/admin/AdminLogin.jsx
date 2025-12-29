@@ -70,19 +70,25 @@ function AdminLogin() {
 
   return (
     <div className="admin-login-container">
-      {/* Verification Animation */}
-      {showVerification && (
-        <VerificationAnimation
-          message="Verifying credentials..."
-          duration={2000}
-          onComplete={() => {
-            setShowVerification(false);
-            navigate('/welcome');
-          }}
-        />
-      )}
-      
       <div className="admin-login-form">
+        {/* Verification Animation - Inline within login form */}
+        {showVerification && (
+          <div className="verification-inline-wrapper">
+            <VerificationAnimation
+              message="Verifying credentials..."
+              duration={2000}
+              inline={true}
+              size="small"
+              onComplete={() => {
+                setShowVerification(false);
+                navigate('/welcome');
+              }}
+            />
+          </div>
+        )}
+        
+        {!showVerification && (
+          <>
         <div className="admin-login-header">
           <div className="admin-login-logo-section">
             <img 

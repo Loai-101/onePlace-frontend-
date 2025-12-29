@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getApiUrl } from '../../utils/security'
+import Loading from '../../components/Loading.jsx'
 import './CompanyUpdateRequests.css'
 
 function CompanyUpdateRequests() {
@@ -169,8 +170,8 @@ function CompanyUpdateRequests() {
     return (
       <div className="company-update-requests-page">
         <h1 className="page-title">Company Update Requests</h1>
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <p>Loading requests...</p>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loading message="Loading requests..." />
         </div>
       </div>
     )
