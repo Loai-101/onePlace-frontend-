@@ -348,17 +348,36 @@ function Calendar() {
       
       const data = await response.json()
       
+      if (!response.ok) {
+        // Handle HTTP error status codes
+        if (response.status === 400) {
+          showNotification(data.message || 'Invalid report data. Please check your input.', 'error')
+        } else if (response.status === 404) {
+          showNotification(data.message || 'Company not found. Please contact support.', 'error')
+        } else if (response.status === 500) {
+          showNotification(data.message || 'Server error. Please try again later.', 'error')
+        } else {
+          showNotification(data.message || 'Error sending report. Please try again.', 'error')
+        }
+        return
+      }
+      
       if (data.success) {
         setShowReportModal(false)
         setShowReportSuccess(true)
         setReportTitle('')
         setReportContent('')
+        if (data.warning) {
+          showNotification(data.warning, 'error')
+        } else {
+          showNotification('Report sent successfully!', 'success')
+        }
       } else {
         showNotification(data.message || 'Error sending report', 'error')
       }
     } catch (error) {
       console.error('Error sending report:', error)
-      showNotification('Error sending report. Please try again.', 'error')
+      showNotification('Network error. Please check your connection and try again.', 'error')
     } finally {
       setSendingReport(false)
     }
