@@ -28,6 +28,7 @@ function Calendar() {
   // Report form state
   const [reportTitle, setReportTitle] = useState('')
   const [reportContent, setReportContent] = useState('')
+  const [reportEmail, setReportEmail] = useState('')
   const [sendingReport, setSendingReport] = useState(false)
   const [showReportSuccess, setShowReportSuccess] = useState(false)
   
@@ -331,6 +332,12 @@ function Calendar() {
       return
     }
 
+    // Validate email if provided
+    if (reportEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reportEmail.trim())) {
+      showNotification('Please enter a valid email address', 'error')
+      return
+    }
+
     try {
       setSendingReport(true)
       const apiUrl = getApiUrl()
@@ -342,7 +349,8 @@ function Calendar() {
         },
         body: JSON.stringify({
           title: reportTitle,
-          content: reportContent
+          content: reportContent,
+          recipientEmail: reportEmail.trim() || undefined // Send custom email if provided
         })
       })
       
@@ -367,6 +375,7 @@ function Calendar() {
         setShowReportSuccess(true)
         setReportTitle('')
         setReportContent('')
+        setReportEmail('')
         if (data.warning) {
           showNotification(data.warning, 'error')
         } else {
@@ -472,6 +481,7 @@ function Calendar() {
             onClick={() => {
               setReportTitle('')
               setReportContent('')
+              setReportEmail('')
               setShowReportModal(true)
             }}
             style={{ backgroundColor: '#28a745' }}
@@ -918,6 +928,7 @@ function Calendar() {
             setShowReportModal(false)
             setReportTitle('')
             setReportContent('')
+            setReportEmail('')
           }
         }}>
           <div className="modal-content event-modal" onClick={(e) => e.stopPropagation()}>
@@ -933,6 +944,7 @@ function Calendar() {
                     setShowReportModal(false)
                     setReportTitle('')
                     setReportContent('')
+                    setReportEmail('')
                   }}>×</button>
                 </div>
                 <div className="modal-body">
@@ -957,6 +969,20 @@ function Calendar() {
                     />
                   </div>
 
+                  <div className="form-group">
+                    <label>Recipient Email Address</label>
+                    <input
+                      type="email"
+                      value={reportEmail}
+                      onChange={(e) => setReportEmail(e.target.value)}
+                      placeholder="Enter email address (optional - defaults to company email)"
+                      style={{ width: '100%' }}
+                    />
+                    <small style={{ color: '#6c757d', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>
+                      Leave empty to send to company email. Enter a custom email to send to a specific recipient.
+                    </small>
+                  </div>
+
                   <div className="form-group" style={{ 
                     background: '#e3f2fd', 
                     padding: '1rem', 
@@ -964,7 +990,7 @@ function Calendar() {
                     fontSize: '0.9rem',
                     color: '#1976d2'
                   }}>
-                    <strong>Note:</strong> This report will be sent to your company's email address.
+                    <strong>Note:</strong> This report will be sent {reportEmail.trim() ? `to ${reportEmail.trim()}` : "to your company's email address"}. The email will appear to be from your email address ({user?.email || 'your email'}).
                   </div>
                 </div>
             <div className="modal-footer">
@@ -972,6 +998,7 @@ function Calendar() {
                 setShowReportModal(false)
                 setReportTitle('')
                 setReportContent('')
+                setReportEmail('')
               }}>
                 Cancel
               </SecondaryButton>
