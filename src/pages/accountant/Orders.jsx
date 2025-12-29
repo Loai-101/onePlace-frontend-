@@ -6,6 +6,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import Loading from '../../components/Loading.jsx'
 import jsPDF from 'jspdf'
 import './Orders.css'
 
@@ -1031,7 +1032,9 @@ function AccountantOrders() {
         </div>
         
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>Loading orders...</div>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+            <Loading message="Loading orders..." />
+          </div>
         ) : (
           <>
             {/* Summary Section - Above Table */}
