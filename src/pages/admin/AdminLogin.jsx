@@ -47,6 +47,10 @@ function AdminLogin() {
       const data = await response.json();
 
       if (response.ok) {
+        // Clear any regular user tokens when admin logs in
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
         // Store admin token and data
         localStorage.setItem('adminToken', data.data.token);
         localStorage.setItem('adminData', JSON.stringify(data.data.admin));
