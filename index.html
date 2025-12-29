@@ -35,6 +35,24 @@
           return false;
         }
       }, true);
+      
+      // Suppress Sentry fetch/network errors
+      const originalFetch = window.fetch;
+      window.fetch = async function(...args) {
+        try {
+          const url = args[0];
+          if (typeof url === 'string' && (url.includes('sentry.io') || url.includes('ingest.us.sentry'))) {
+            // Suppress Sentry requests silently
+            return new Response(null, { status: 200, statusText: 'OK' });
+          }
+          return await originalFetch.apply(this, args);
+        } catch (error) {
+          if (error.message && error.message.includes('sentry.io')) {
+            return new Response(null, { status: 200, statusText: 'OK' });
+          }
+          throw error;
+        }
+      };
     </script>
   </head>
   <body>
