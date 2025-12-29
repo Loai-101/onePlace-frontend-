@@ -5,6 +5,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import Loading from '../../components/Loading.jsx'
 import './Brands.css'
 
 function Brands() {
@@ -382,9 +383,7 @@ function Brands() {
     return (
       <div className="brands-page">
         <h1 className="page-title">Brand Management</h1>
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <p>Loading brands...</p>
-        </div>
+        <Loading message="Loading brands..." />
       </div>
     )
   }

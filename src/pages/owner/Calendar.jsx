@@ -4,6 +4,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
+import Loading from '../../components/Loading.jsx'
 import '../calendar/Calendar.css'
 
 function OwnerCalendar() {
@@ -226,7 +227,7 @@ function OwnerCalendar() {
 
       <PageSection title="Calendar View">
         {loading ? (
-          <div className="loading-state">Loading calendar events...</div>
+          <Loading message="Loading calendar events..." />
         ) : (
           <div className="calendar-container">
             <div className="calendar-grid">

@@ -5,6 +5,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import Loading from '../../components/Loading.jsx'
 import './Users.css'
 
 function Users() {
@@ -391,9 +392,7 @@ function Users() {
         <div className="page-header">
           <h1 className="page-title">User Management</h1>
         </div>
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <p>Loading users...</p>
-        </div>
+        <Loading message="Loading users..." />
       </div>
     )
   }

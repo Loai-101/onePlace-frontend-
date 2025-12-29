@@ -4,6 +4,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import Loading from '../../components/Loading.jsx'
 import { getApiUrl } from '../../utils/security'
 import './Accounts.css'
 
@@ -659,7 +660,12 @@ function Accounts() {
   }
 
   if (loading) {
-    return <div className="accounts-page">Loading accounts...</div>
+    return (
+      <div className="accounts-page">
+        <h1 className="page-title">Account Management</h1>
+        <Loading message="Loading accounts..." />
+      </div>
+    )
   }
 
   return (
