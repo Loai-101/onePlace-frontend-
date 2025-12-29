@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../utils/security';
+import Loading from '../../components/Loading.jsx';
 import './AdminDashboard.css';
 import AdminManagement from './AdminManagement';
 import CompanyUpdateRequests from './CompanyUpdateRequests';
@@ -557,7 +558,7 @@ function AdminDashboard() {
   if (loading) {
     return (
       <div className="admin-dashboard">
-        <div className="loading">Loading dashboard...</div>
+        <Loading message="Loading dashboard..." />
       </div>
     );
   }

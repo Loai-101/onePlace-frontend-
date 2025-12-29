@@ -5,6 +5,8 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import Loading from '../../components/Loading.jsx'
+import SuccessAnimation from '../../components/SuccessAnimation.jsx'
 import { getApiUrl } from '../../utils/security'
 import './Calendar.css'
 
@@ -27,6 +29,7 @@ function Calendar() {
   const [reportTitle, setReportTitle] = useState('')
   const [reportContent, setReportContent] = useState('')
   const [sendingReport, setSendingReport] = useState(false)
+  const [showReportSuccess, setShowReportSuccess] = useState(false)
   
   // Form state
   const [eventType, setEventType] = useState('visit') // 'visit' or 'todo'
@@ -346,10 +349,10 @@ function Calendar() {
       const data = await response.json()
       
       if (data.success) {
-        showNotification('Report sent successfully to company email!', 'success')
+        setShowReportModal(false)
+        setShowReportSuccess(true)
         setReportTitle('')
         setReportContent('')
-        setShowReportModal(false)
       } else {
         showNotification(data.message || 'Error sending report', 'error')
       }
@@ -461,7 +464,7 @@ function Calendar() {
 
       <PageSection title="Calendar View">
         {loading ? (
-          <div className="loading-state">Loading calendar events...</div>
+          <Loading message="Loading calendar events..." />
         ) : (
           <div className="calendar-container">
             <div className="calendar-grid">
@@ -877,54 +880,74 @@ function Calendar() {
         </div>
       )}
 
+      {/* Success Animation for Report */}
+      {showReportSuccess && (
+        <SuccessAnimation
+          message="Report sent successfully!"
+          duration={2500}
+          onComplete={() => {
+            setShowReportSuccess(false)
+            showNotification('Report sent successfully to company email!', 'success')
+          }}
+        />
+      )}
+
       {/* Write Report Modal */}
       {showReportModal && (
         <div className="modal-overlay" onClick={() => {
-          setShowReportModal(false)
-          setReportTitle('')
-          setReportContent('')
+          if (!sendingReport) {
+            setShowReportModal(false)
+            setReportTitle('')
+            setReportContent('')
+          }
         }}>
           <div className="modal-content event-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Write Report</h2>
-              <button className="modal-close" onClick={() => {
-                setShowReportModal(false)
-                setReportTitle('')
-                setReportContent('')
-              }}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Report Title *</label>
-                <input
-                  type="text"
-                  value={reportTitle}
-                  onChange={(e) => setReportTitle(e.target.value)}
-                  placeholder="Enter report title"
-                />
+            {sendingReport ? (
+              <div style={{ padding: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', minHeight: '300px', justifyContent: 'center' }}>
+                <Loading size="medium" message="Sending report..." />
               </div>
+            ) : (
+              <>
+                <div className="modal-header">
+                  <h2>Write Report</h2>
+                  <button className="modal-close" onClick={() => {
+                    setShowReportModal(false)
+                    setReportTitle('')
+                    setReportContent('')
+                  }}>×</button>
+                </div>
+                <div className="modal-body">
+                  <div className="form-group">
+                    <label>Report Title *</label>
+                    <input
+                      type="text"
+                      value={reportTitle}
+                      onChange={(e) => setReportTitle(e.target.value)}
+                      placeholder="Enter report title"
+                    />
+                  </div>
 
-              <div className="form-group">
-                <label>Report Content *</label>
-                <textarea
-                  value={reportContent}
-                  onChange={(e) => setReportContent(e.target.value)}
-                  rows="10"
-                  placeholder="Write your report here..."
-                  style={{ minHeight: '200px' }}
-                />
-              </div>
+                  <div className="form-group">
+                    <label>Report Content *</label>
+                    <textarea
+                      value={reportContent}
+                      onChange={(e) => setReportContent(e.target.value)}
+                      rows="10"
+                      placeholder="Write your report here..."
+                      style={{ minHeight: '200px' }}
+                    />
+                  </div>
 
-              <div className="form-group" style={{ 
-                background: '#e3f2fd', 
-                padding: '1rem', 
-                borderRadius: '4px',
-                fontSize: '0.9rem',
-                color: '#1976d2'
-              }}>
-                <strong>Note:</strong> This report will be sent to your company's email address.
-              </div>
-            </div>
+                  <div className="form-group" style={{ 
+                    background: '#e3f2fd', 
+                    padding: '1rem', 
+                    borderRadius: '4px',
+                    fontSize: '0.9rem',
+                    color: '#1976d2'
+                  }}>
+                    <strong>Note:</strong> This report will be sent to your company's email address.
+                  </div>
+                </div>
             <div className="modal-footer">
               <SecondaryButton onClick={() => {
                 setShowReportModal(false)
@@ -934,9 +957,11 @@ function Calendar() {
                 Cancel
               </SecondaryButton>
               <PrimaryButton onClick={handleSendReport} disabled={sendingReport}>
-                {sendingReport ? 'Sending...' : 'Send Report'}
+                Send Report
               </PrimaryButton>
             </div>
+              </>
+            )}
           </div>
         </div>
       )}

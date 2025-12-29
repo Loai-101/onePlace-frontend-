@@ -6,6 +6,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import Loading from '../../components/Loading.jsx'
 import {
   LineChart,
   Line,
@@ -298,7 +299,7 @@ function AccountantDashboard() {
   if (loading && allOrders.length === 0) {
     return (
       <div className="accountant-dashboard">
-        <div className="loading-state">Loading dashboard data...</div>
+        <Loading message="Loading dashboard data..." />
       </div>
     )
   }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import { useAuth } from '../../contexts/AuthContext'
+import VerificationAnimation from '../../components/VerificationAnimation.jsx'
 import './CompanySignup.css'
 
 function CompanySignup() {
@@ -42,6 +43,7 @@ function CompanySignup() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showVerification, setShowVerification] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -304,8 +306,9 @@ function CompanySignup() {
         const result = await registerCompany(formData)
         
         if (result.success) {
-          // Show success popup
-          setShowSuccessPopup(true)
+          // Show verification animation first
+          setIsLoading(false)
+          setShowVerification(true)
         } else {
           setErrors({ general: result.error })
         }
@@ -323,6 +326,18 @@ function CompanySignup() {
 
   return (
     <div className="company-signup-container">
+      {/* Verification Animation */}
+      {showVerification && (
+        <VerificationAnimation
+          message="Verifying registration..."
+          duration={2500}
+          onComplete={() => {
+            setShowVerification(false)
+            setShowSuccessPopup(true)
+          }}
+        />
+      )}
+
       <div className="company-signup-form">
         <div className="company-signup-header">
           <div className="company-signup-logo-section">

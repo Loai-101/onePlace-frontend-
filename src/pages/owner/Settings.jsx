@@ -349,9 +349,7 @@ function Settings() {
     return (
       <div className="settings-page">
         <h1 className="page-title">Company Informations</h1>
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <p>Loading company information...</p>
-        </div>
+        <Loading message="Loading company information..." />
       </div>
     )
   }

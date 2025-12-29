@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import Loading from '../../components/Loading.jsx'
 import './Catalog.css'
 
 function Catalog() {
@@ -501,9 +502,7 @@ function Catalog() {
     return (
       <div className="catalog-page">
         <h1 className="page-title">Product Menu</h1>
-        <div style={{ padding: '40px', textAlign: 'center' }}>
-          <p>Loading accounts, categories, brands, and products...</p>
-        </div>
+        <Loading message="Loading accounts, categories, brands, and products..." />
       </div>
     )
   }

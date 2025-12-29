@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { getApiUrl } from '../utils/security'
 import PageSection from '../components/PageSection.jsx'
+import Loading from '../components/Loading.jsx'
 import './Company.css'
 
 function Company() {
@@ -46,7 +47,7 @@ function Company() {
     return (
       <div className="company-page">
         <PageSection title="Company Information">
-          <div className="loading-state">Loading company information...</div>
+          <Loading message="Loading company information..." />
         </PageSection>
       </div>
     )

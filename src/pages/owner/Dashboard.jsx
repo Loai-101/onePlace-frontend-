@@ -540,7 +540,7 @@ function OwnerDashboard() {
   if (loading && orders.length === 0) {
     return (
       <div className="owner-dashboard">
-        <div className="loading-state">Loading dashboard data...</div>
+        <Loading message="Loading dashboard data..." />
       </div>
     )
   }

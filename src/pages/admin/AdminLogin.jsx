@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../utils/security';
+import VerificationAnimation from '../../components/VerificationAnimation.jsx';
 import './AdminLogin.css';
 
 function AdminLogin() {
@@ -10,6 +11,7 @@ function AdminLogin() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showVerification, setShowVerification] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -49,8 +51,12 @@ function AdminLogin() {
         localStorage.setItem('adminToken', data.data.token);
         localStorage.setItem('adminData', JSON.stringify(data.data.admin));
         
-        // Redirect to admin dashboard
-        navigate('/admin/dashboard');
+        // Store user data for welcome animation (admin role)
+        localStorage.setItem('user', JSON.stringify({ role: 'admin', ...data.data.admin }));
+        
+        // Show verification animation first
+        setIsLoading(false);
+        setShowVerification(true);
       } else {
         setErrors({ general: data.message || 'Login failed' });
       }
@@ -64,6 +70,18 @@ function AdminLogin() {
 
   return (
     <div className="admin-login-container">
+      {/* Verification Animation */}
+      {showVerification && (
+        <VerificationAnimation
+          message="Verifying credentials..."
+          duration={2000}
+          onComplete={() => {
+            setShowVerification(false);
+            navigate('/welcome');
+          }}
+        />
+      )}
+      
       <div className="admin-login-form">
         <div className="admin-login-header">
           <div className="admin-login-logo-section">

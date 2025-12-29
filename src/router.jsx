@@ -45,6 +45,7 @@ import AdminLogin from './pages/admin/AdminLogin.jsx'
 import AdminDashboard from './pages/admin/AdminDashboard.jsx'
 
 // Other pages
+import WelcomeAnimation from './pages/WelcomeAnimation.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 export default function Router() {
@@ -61,6 +62,9 @@ export default function Router() {
           <CompanySignup />
         </AuthLayout>
       } />
+
+      {/* Welcome animation - shown after login */}
+      <Route path="/welcome" element={<WelcomeAnimation />} />
 
       {/* App routes - Protected */}
       <Route path="/dashboard" element={<AppLayout />}>

@@ -6,6 +6,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import SuccessAnimation from '../../components/SuccessAnimation.jsx'
 import './Cart.css'
 
 function Cart() {
@@ -18,6 +19,7 @@ function Cart() {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
   const [showCreditLimitWarning, setShowCreditLimitWarning] = useState(false)
+  const [showSendSuccess, setShowSendSuccess] = useState(false)
 
   // Get VAT rate for a specific product from the cart item
   const getProductVatRate = (item) => {
@@ -522,8 +524,8 @@ function Cart() {
         setCartItems([])
         window.dispatchEvent(new CustomEvent('cartUpdated'))
         
-        // Show success popup
-        setShowSuccessPopup(true)
+        // Show success animation
+        setShowSendSuccess(true)
       } else {
         console.error('Order creation error:', data)
         alert(data.message || 'Error sending order to accountant. Please check the console for details.')
@@ -611,6 +613,18 @@ function Cart() {
 
   return (
     <div>
+      {/* Success Animation for Send to Accountant */}
+      {showSendSuccess && (
+        <SuccessAnimation
+          message="Order sent successfully!"
+          duration={2500}
+          onComplete={() => {
+            setShowSendSuccess(false)
+            setShowSuccessPopup(true)
+          }}
+        />
+      )}
+
       <h1 className="page-title">Shopping Cart</h1>
       
       <PageSection title="Order Items">

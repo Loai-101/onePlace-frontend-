@@ -1,0 +1,80 @@
+.verification-animation-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.98);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.verification-animation-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.verification-lottie {
+  width: 100%;
+  height: auto;
+}
+
+.verification-animation-content.small .verification-lottie {
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.verification-animation-content.medium .verification-lottie {
+  max-width: 350px;
+  max-height: 350px;
+}
+
+.verification-animation-content.large .verification-lottie {
+  max-width: 500px;
+  max-height: 500px;
+}
+
+.verification-message {
+  color: #007bff;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+  animation: slideUp 0.5s ease-out;
+}
+
+.verification-animation-content.small .verification-message {
+  font-size: 1.1rem;
+}
+
+.verification-animation-content.large .verification-message {
+  font-size: 1.8rem;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

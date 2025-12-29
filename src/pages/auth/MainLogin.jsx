@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import { useAuth } from '../../contexts/AuthContext'
+import VerificationAnimation from '../../components/VerificationAnimation.jsx'
 import './MainLogin.css'
 
 function MainLogin() {
@@ -15,6 +16,7 @@ function MainLogin() {
   })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
+  const [showVerification, setShowVerification] = useState(false)
 
   const handleLoginTypeSelect = (type) => {
     setLoginType(type)
@@ -102,16 +104,9 @@ function MainLogin() {
           return
         }
         
-        // If validation passes, redirect based on user role
-        if (companyRoles.includes(userRole)) {
-          navigate('/dashboard/owner') // Company owners go to owner dashboard
-        } else if (userRole === 'accountant') {
-          navigate('/dashboard/accountant')
-        } else if (userRole === 'salesman') {
-          navigate('/dashboard')
-        } else {
-          navigate('/dashboard')
-        }
+        // If validation passes, show verification animation
+        setIsLoading(false)
+        setShowVerification(true)
       } else {
         // Handle specific error messages
         let errorMessage = result.error || 'Login failed'
@@ -137,6 +132,18 @@ function MainLogin() {
 
   return (
     <div className="main-login-container">
+      {/* Verification Animation */}
+      {showVerification && (
+        <VerificationAnimation
+          message="Verifying credentials..."
+          duration={2000}
+          onComplete={() => {
+            setShowVerification(false)
+            navigate('/welcome')
+          }}
+        />
+      )}
+
       <div className="main-login-background">
         <div className="main-login-overlay"></div>
       </div>
