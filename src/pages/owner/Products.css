@@ -407,6 +407,7 @@
 }
 
 .success-popup,
+.error-popup,
 .confirm-popup {
   background: white;
   border-radius: 16px;
@@ -418,6 +419,7 @@
 }
 
 .success-icon,
+.error-icon,
 .confirm-icon {
   width: 80px;
   height: 80px;
@@ -430,6 +432,10 @@
   font-size: 48px;
   color: white;
   font-weight: bold;
+}
+
+.error-icon {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
 }
 
 .confirm-icon {

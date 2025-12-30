@@ -20,9 +20,11 @@ function Users() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [showErrorPopup, setShowErrorPopup] = useState(false)
   const [showConfirmPopup, setShowConfirmPopup] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
   const [confirmMessage, setConfirmMessage] = useState('')
   const [confirmAction, setConfirmAction] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
@@ -133,13 +135,13 @@ function Users() {
         setSuccessMessage(data.message)
         setShowSuccessPopup(true)
       } else {
-        setSuccessMessage(data.message)
-        setShowSuccessPopup(true)
+        setErrorMessage(data.message || 'Error creating user')
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Error creating user:', error)
-      setSuccessMessage('Error creating user')
-      setShowSuccessPopup(true)
+      setErrorMessage('Error creating user: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     }
   }
 
@@ -177,21 +179,21 @@ function Users() {
         setSuccessMessage(data.message)
         setShowSuccessPopup(true)
       } else {
-        setSuccessMessage(data.message)
-        setShowSuccessPopup(true)
+        setErrorMessage(data.message || 'Error updating user')
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Error updating user:', error)
-      setSuccessMessage('Error updating user')
-      setShowSuccessPopup(true)
+      setErrorMessage('Error updating user: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     }
   }
 
   const handleToggleStatus = (userId) => {
     // Prevent owner from deactivating themselves
     if (currentUser && (userId === currentUser.id || userId === currentUser._id)) {
-      setSuccessMessage('You cannot deactivate your own account!')
-      setShowSuccessPopup(true)
+      setErrorMessage('You cannot deactivate your own account!')
+      setShowErrorPopup(true)
       return
     }
 
@@ -213,13 +215,13 @@ function Users() {
           setSuccessMessage(data.message)
           setShowSuccessPopup(true)
         } else {
-          setSuccessMessage(data.message)
-          setShowSuccessPopup(true)
+          setErrorMessage(data.message || 'Error updating user status')
+          setShowErrorPopup(true)
         }
       } catch (error) {
         console.error('Error toggling user status:', error)
-        setSuccessMessage('Error updating user status')
-        setShowSuccessPopup(true)
+        setErrorMessage('Error updating user status: ' + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
       }
     })
     setShowConfirmPopup(true)
@@ -233,8 +235,8 @@ function Users() {
 
   const confirmResetPassword = async () => {
     if (!newPassword || newPassword.length < 6) {
-      setSuccessMessage('Password must be at least 6 characters long')
-      setShowSuccessPopup(true)
+      setErrorMessage('Password must be at least 6 characters long')
+      setShowErrorPopup(true)
       return
     }
 
@@ -252,20 +254,25 @@ function Users() {
       
       setShowPasswordModal(false)
       setNewPassword('')
-      setSuccessMessage(data.message)
-      setShowSuccessPopup(true)
+      if (data.success) {
+        setSuccessMessage(data.message)
+        setShowSuccessPopup(true)
+      } else {
+        setErrorMessage(data.message || 'Error resetting password')
+        setShowErrorPopup(true)
+      }
     } catch (error) {
       console.error('Error resetting password:', error)
-      setSuccessMessage('Error resetting password')
-      setShowSuccessPopup(true)
+      setErrorMessage('Error resetting password: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     }
   }
 
   const handleDeleteUser = (userId) => {
     // Prevent owner from deleting themselves
     if (currentUser && (userId === currentUser.id || userId === currentUser._id)) {
-      setSuccessMessage('You cannot delete your own account!')
-      setShowSuccessPopup(true)
+      setErrorMessage('You cannot delete your own account!')
+      setShowErrorPopup(true)
       return
     }
 
@@ -287,13 +294,13 @@ function Users() {
           setSuccessMessage(data.message)
           setShowSuccessPopup(true)
         } else {
-          setSuccessMessage(data.message)
-          setShowSuccessPopup(true)
+          setErrorMessage(data.message || 'Error deleting user')
+          setShowErrorPopup(true)
         }
       } catch (error) {
         console.error('Error deleting user:', error)
-        setSuccessMessage('Error deleting user')
-        setShowSuccessPopup(true)
+        setErrorMessage('Error deleting user: ' + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
       }
     })
     setShowConfirmPopup(true)
@@ -919,6 +926,20 @@ function Users() {
             <h3>Success!</h3>
             <p>{successMessage}</p>
             <PrimaryButton onClick={() => setShowSuccessPopup(false)}>
+              OK
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
+
+      {/* Error Popup */}
+      {showErrorPopup && (
+        <div className="modal-overlay" onClick={() => setShowErrorPopup(false)}>
+          <div className="error-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="error-icon">✗</div>
+            <h3>Error!</h3>
+            <p>{errorMessage}</p>
+            <PrimaryButton onClick={() => setShowErrorPopup(false)}>
               OK
             </PrimaryButton>
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
@@ -10,6 +11,7 @@ import './Categories.css'
 
 function Categories() {
   const { token } = useAuth()
+  const navigate = useNavigate()
   const [categories, setCategories] = useState([])
   const [filteredCategories, setFilteredCategories] = useState([])
   const [brands, setBrands] = useState([])
@@ -20,14 +22,17 @@ function Categories() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [showErrorPopup, setShowErrorPopup] = useState(false)
   const [showConfirmPopup, setShowConfirmPopup] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
   const [confirmMessage, setConfirmMessage] = useState('')
   const [confirmAction, setConfirmAction] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    brand: '',
+    brand: '', // Keep for backward compatibility
+    brands: [], // New: array of brand IDs
     isActive: true,
     image: ''
   })
@@ -38,6 +43,17 @@ function Categories() {
   const [excelFile, setExcelFile] = useState(null)
   const [importing, setImporting] = useState(false)
   const [importResults, setImportResults] = useState(null)
+  const [showBrandModal, setShowBrandModal] = useState(false)
+  const [selectedBrandDetails, setSelectedBrandDetails] = useState(null)
+  const [showBrandEditModal, setShowBrandEditModal] = useState(false)
+  const [brandFormData, setBrandFormData] = useState({
+    name: '',
+    description: '',
+    logo: '',
+    brandColor: '#667eea'
+  })
+  const [brandLogoFile, setBrandLogoFile] = useState(null)
+  const [brandLogoPreview, setBrandLogoPreview] = useState('')
 
   useEffect(() => {
     if (token) {
@@ -114,6 +130,13 @@ function Categories() {
   const handleCreateCategory = async (e) => {
     e.preventDefault()
     
+    // Validate that at least one brand is selected
+    if (formData.brands.length === 0) {
+      setErrorMessage('Please select at least one brand')
+      setShowErrorPopup(true)
+      return
+    }
+    
     try {
       let imageUrl = formData.image
       
@@ -122,19 +145,34 @@ function Categories() {
         imageUrl = await uploadImageToSupabase(imageFile)
       }
       
+      // Prepare request body - use brands array, fallback to single brand for backward compatibility
+      const requestBody = {
+        name: formData.name,
+        description: formData.description,
+        isActive: formData.isActive,
+        image: {
+          url: imageUrl || undefined,
+          alt: formData.name
+        }
+      }
+      
+      // If brands array has items, use it; otherwise use single brand for backward compatibility
+      if (formData.brands.length > 0) {
+        requestBody.brands = formData.brands
+        // Also set brand to first brand for backward compatibility
+        requestBody.brand = formData.brands[0]
+      } else if (formData.brand) {
+        requestBody.brand = formData.brand
+        requestBody.brands = [formData.brand]
+      }
+      
       const response = await fetch(`${getApiUrl()}/api/categories`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...formData,
-          image: {
-            url: imageUrl || undefined,
-            alt: formData.name
-          }
-        })
+        body: JSON.stringify(requestBody)
       })
 
       const data = await response.json()
@@ -146,18 +184,25 @@ function Categories() {
         setSuccessMessage('Category created successfully!')
         setShowSuccessPopup(true)
       } else {
-        setSuccessMessage(data.message || 'Error creating category')
-        setShowSuccessPopup(true)
+        setErrorMessage(data.message || 'Error creating category')
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Error creating category:', error)
-      setSuccessMessage('Error creating category: ' + error.message)
-      setShowSuccessPopup(true)
+      setErrorMessage('Error creating category: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     }
   }
 
   const handleUpdateCategory = async (e) => {
     e.preventDefault()
+    
+    // Validate that at least one brand is selected
+    if (formData.brands.length === 0) {
+      setErrorMessage('Please select at least one brand')
+      setShowErrorPopup(true)
+      return
+    }
     
     try {
       let imageUrl = formData.image
@@ -167,19 +212,34 @@ function Categories() {
         imageUrl = await uploadImageToSupabase(imageFile)
       }
       
+      // Prepare request body - use brands array, fallback to single brand for backward compatibility
+      const requestBody = {
+        name: formData.name,
+        description: formData.description,
+        isActive: formData.isActive,
+        image: {
+          url: imageUrl || undefined,
+          alt: formData.name
+        }
+      }
+      
+      // If brands array has items, use it; otherwise use single brand for backward compatibility
+      if (formData.brands.length > 0) {
+        requestBody.brands = formData.brands
+        // Also set brand to first brand for backward compatibility
+        requestBody.brand = formData.brands[0]
+      } else if (formData.brand) {
+        requestBody.brand = formData.brand
+        requestBody.brands = [formData.brand]
+      }
+      
       const response = await fetch(`${getApiUrl()}/api/categories/${selectedCategory._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...formData,
-          image: {
-            url: imageUrl || undefined,
-            alt: formData.name
-          }
-        })
+        body: JSON.stringify(requestBody)
       })
 
       const data = await response.json()
@@ -191,20 +251,20 @@ function Categories() {
         setSuccessMessage('Category updated successfully!')
         setShowSuccessPopup(true)
       } else {
-        setSuccessMessage(data.message || 'Error updating category')
-        setShowSuccessPopup(true)
+        setErrorMessage(data.message || 'Error updating category')
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Error updating category:', error)
-      setSuccessMessage('Error updating category')
-      setShowSuccessPopup(true)
+      setErrorMessage('Error updating category: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     }
   }
 
   const handleDeleteCategory = (categoryId, categoryName, productCount) => {
     if (productCount > 0) {
-      setSuccessMessage(`Cannot delete "${categoryName}". It has ${productCount} products associated with it.`)
-      setShowSuccessPopup(true)
+      setErrorMessage(`Cannot delete "${categoryName}". It has ${productCount} products associated with it.`)
+      setShowErrorPopup(true)
       return
     }
 
@@ -226,13 +286,13 @@ function Categories() {
           setSuccessMessage(data.message)
           setShowSuccessPopup(true)
         } else {
-          setSuccessMessage(data.message)
-          setShowSuccessPopup(true)
+          setErrorMessage(data.message || 'Error deleting category')
+          setShowErrorPopup(true)
         }
       } catch (error) {
         console.error('Error deleting category:', error)
-        setSuccessMessage('Error deleting category')
-        setShowSuccessPopup(true)
+        setErrorMessage('Error deleting category: ' + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
       }
     })
     setShowConfirmPopup(true)
@@ -263,13 +323,13 @@ function Categories() {
           setSuccessMessage(`Category ${action}d successfully!`)
           setShowSuccessPopup(true)
         } else {
-          setSuccessMessage(data.message)
-          setShowSuccessPopup(true)
+          setErrorMessage(data.message || `Error ${action}ing category`)
+          setShowErrorPopup(true)
         }
       } catch (error) {
         console.error(`Error ${action}ing category:`, error)
-        setSuccessMessage(`Error ${action}ing category`)
-        setShowSuccessPopup(true)
+        setErrorMessage(`Error ${action}ing category: ` + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
       }
     })
     setShowConfirmPopup(true)
@@ -282,10 +342,18 @@ function Categories() {
 
   const openEditModal = (category) => {
     setSelectedCategory(category)
+    // Get all brand IDs from brandProductCounts if available
+    const categoryBrands = category.brandProductCounts 
+      ? category.brandProductCounts.map(bc => bc.brandId)
+      : category.brand?._id 
+        ? [category.brand._id] 
+        : []
+    
     setFormData({
       name: category.name,
       description: category.description || '',
-      brand: category.brand?._id || '',
+      brand: category.brand?._id || '', // Keep for backward compatibility
+      brands: categoryBrands, // Array of brand IDs
       isActive: category.isActive !== false,
       image: category.image?.url || ''
     })
@@ -299,6 +367,7 @@ function Categories() {
       name: '',
       description: '',
       brand: '',
+      brands: [],
       isActive: true,
       image: ''
     })
@@ -312,15 +381,15 @@ function Categories() {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setSuccessMessage('Please select an image file')
-        setShowSuccessPopup(true)
+        setErrorMessage('Please select an image file')
+        setShowErrorPopup(true)
         return
       }
       
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        setSuccessMessage('Image size must be less than 5MB')
-        setShowSuccessPopup(true)
+        setErrorMessage('Image size must be less than 5MB')
+        setShowErrorPopup(true)
         return
       }
 
@@ -386,15 +455,15 @@ function Categories() {
         validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
       
       if (!isValidType) {
-        setSuccessMessage('Please select an Excel file (.xlsx, .xls) or CSV file')
-        setShowSuccessPopup(true)
+        setErrorMessage('Please select an Excel file (.xlsx, .xls) or CSV file')
+        setShowErrorPopup(true)
         return
       }
       
       // Validate file size (10MB max)
       if (file.size > 10 * 1024 * 1024) {
-        setSuccessMessage('File size must be less than 10MB')
-        setShowSuccessPopup(true)
+        setErrorMessage('File size must be less than 10MB')
+        setShowErrorPopup(true)
         return
       }
 
@@ -447,8 +516,8 @@ function Categories() {
 
   const handleBulkImport = async () => {
     if (!excelFile) {
-      setSuccessMessage('Please select an Excel file')
-      setShowSuccessPopup(true)
+      setErrorMessage('Please select an Excel file')
+      setShowErrorPopup(true)
       return
     }
 
@@ -474,16 +543,199 @@ function Categories() {
         setSuccessMessage(data.message)
         setShowSuccessPopup(true)
       } else {
-        setSuccessMessage(data.message || 'Error importing categories')
-        setShowSuccessPopup(true)
+        setErrorMessage(data.message || 'Error importing categories')
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Import error:', error)
-      setSuccessMessage('Error importing categories: ' + error.message)
-      setShowSuccessPopup(true)
+      setErrorMessage('Error importing categories: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     } finally {
       setImporting(false)
     }
+  }
+
+  const handleBrandTagClick = async (brandId) => {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/brands/${brandId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setSelectedBrandDetails(data.data)
+        setShowBrandModal(true)
+      } else {
+        setErrorMessage('Error loading brand details')
+        setShowErrorPopup(true)
+      }
+    } catch (error) {
+      console.error('Error loading brand:', error)
+      setErrorMessage('Error loading brand details: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
+    }
+  }
+
+  const handleEditBrand = () => {
+    if (selectedBrandDetails) {
+      setBrandFormData({
+        name: selectedBrandDetails.name,
+        description: selectedBrandDetails.description || '',
+        logo: selectedBrandDetails.logo?.url || '',
+        brandColor: selectedBrandDetails.brandColor || '#667eea'
+      })
+      setBrandLogoFile(null)
+      setBrandLogoPreview(selectedBrandDetails.logo?.url || '')
+      setShowBrandModal(false)
+      setShowBrandEditModal(true)
+    }
+  }
+
+  const handleBrandFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setErrorMessage('Please select an image file')
+        setShowErrorPopup(true)
+        return
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage('Image size must be less than 5MB')
+        setShowErrorPopup(true)
+        return
+      }
+
+      setBrandLogoFile(file)
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setBrandLogoPreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveBrandImage = () => {
+    setBrandLogoFile(null)
+    setBrandLogoPreview('')
+    setBrandFormData({...brandFormData, logo: ''})
+  }
+
+  const handleUpdateBrand = async (e) => {
+    e.preventDefault()
+    
+    try {
+      let logoUrl = brandFormData.logo
+      
+      if (brandLogoFile) {
+        logoUrl = await uploadImageToSupabase(brandLogoFile)
+      }
+      
+      const response = await fetch(`${getApiUrl()}/api/brands/${selectedBrandDetails._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: brandFormData.name,
+          description: brandFormData.description,
+          logo: {
+            url: logoUrl || undefined,
+            alt: brandFormData.name
+          },
+          brandColor: brandFormData.brandColor
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setShowBrandEditModal(false)
+        loadCategories() // Refresh categories to update brand info
+        // Reload brand details to show updated info
+        const response = await fetch(`${getApiUrl()}/api/brands/${selectedBrandDetails._id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        const updatedData = await response.json()
+        if (updatedData.success) {
+          setSelectedBrandDetails(updatedData.data)
+          setShowBrandModal(true)
+        }
+        setSuccessMessage('Brand updated successfully!')
+        setShowSuccessPopup(true)
+      } else {
+        setErrorMessage(data.message || 'Error updating brand')
+        setShowErrorPopup(true)
+      }
+    } catch (error) {
+      console.error('Error updating brand:', error)
+      setErrorMessage('Error updating brand: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
+    }
+  }
+
+  const handleDeleteBrand = () => {
+    if (!selectedBrandDetails) {
+      console.error('No brand selected for deletion')
+      return
+    }
+
+    const brandId = selectedBrandDetails._id
+    const brandName = selectedBrandDetails.name
+    const productCount = selectedBrandDetails.productCount || 0
+
+    if (productCount > 0) {
+      setErrorMessage(`Cannot delete "${brandName}". It has ${productCount} products associated with it.`)
+      setShowErrorPopup(true)
+      setShowBrandModal(false)
+      return
+    }
+
+    // Close brand modal first
+    setShowBrandModal(false)
+    
+    // Set confirmation message and action
+    setConfirmMessage(`Are you sure you want to delete "${brandName}"? This action cannot be undone.`)
+    setConfirmAction(() => async () => {
+      try {
+        console.log('Deleting brand:', brandId)
+        const response = await fetch(`${getApiUrl()}/api/brands/${brandId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        const data = await response.json()
+        
+        if (data.success) {
+          setSelectedBrandDetails(null)
+          loadCategories() // Refresh categories to update brand tags
+          setSuccessMessage(data.message || 'Brand deleted successfully!')
+          setShowSuccessPopup(true)
+        } else {
+          setErrorMessage(data.message || 'Error deleting brand')
+          setShowErrorPopup(true)
+        }
+      } catch (error) {
+        console.error('Error deleting brand:', error)
+        setErrorMessage('Error deleting brand: ' + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
+      }
+    })
+    
+    // Show confirmation popup
+    setShowConfirmPopup(true)
   }
 
   if (!token) {
@@ -560,16 +812,7 @@ function Categories() {
                   )}
                   <div className="category-info">
                     <h3 className="category-name">{category.name}</h3>
-                    <p className="category-description">{category.description || 'No description'}</p>
                   </div>
-                  {category.brand && (
-                    <div className="category-brand" style={{ borderLeft: `4px solid ${category.brand.brandColor || '#667eea'}` }}>
-                      {category.brand.logo?.url && (
-                        <img src={category.brand.logo.url} alt={category.brand.name} className="brand-logo-small" />
-                      )}
-                      <span className="brand-name">{category.brand.name}</span>
-                    </div>
-                  )}
                 </div>
                 <div className="category-card-body">
                   <div className="category-meta">
@@ -580,22 +823,88 @@ function Categories() {
                       {category.totalProductCount || 0} Total Products
                     </span>
                   </div>
-                  {category.brandProductCounts && category.brandProductCounts.length > 0 && (
-                    <div className="brand-product-counts">
-                      <div className="brand-counts-label">Products by Brand (Qt):</div>
-                      <div className="brand-counts-list">
-                        {category.brandProductCounts.map((brandCount, index) => (
-                          <div key={index} className="brand-count-item" style={{ borderLeft: `3px solid ${brandCount.brandColor || '#667eea'}` }}>
-                            {brandCount.brandLogo?.url && (
-                              <img src={brandCount.brandLogo.url} alt={brandCount.brandName} className="brand-logo-tiny" />
-                            )}
-                            <span className="brand-count-name">{brandCount.brandName}</span>
-                            <span className="brand-count-number">{brandCount.productCount}</span>
+                  {(() => {
+                    // Combine brands from brandProductCounts and category.brands array
+                    const allBrands = new Map();
+                    
+                    // Add brands from brandProductCounts (with product counts)
+                    if (category.brandProductCounts && category.brandProductCounts.length > 0) {
+                      category.brandProductCounts.forEach(brandCount => {
+                        const brandId = brandCount.brandId?.toString() || brandCount.brandId;
+                        if (brandId) {
+                          allBrands.set(brandId, {
+                            brandId: brandCount.brandId,
+                            brandName: brandCount.brandName,
+                            brandLogo: brandCount.brandLogo,
+                            brandColor: brandCount.brandColor,
+                            productCount: brandCount.productCount || 0
+                          });
+                        }
+                      });
+                    }
+                    
+                    // Add brands from category.brands array (if not already included)
+                    if (category.brands && Array.isArray(category.brands) && category.brands.length > 0) {
+                      category.brands.forEach(brand => {
+                        if (brand && brand._id) {
+                          const brandId = brand._id.toString();
+                          if (!allBrands.has(brandId)) {
+                            allBrands.set(brandId, {
+                              brandId: brand._id,
+                              brandName: brand.name,
+                              brandLogo: brand.logo,
+                              brandColor: brand.brandColor,
+                              productCount: 0 // No products yet
+                            });
+                          }
+                        }
+                      });
+                    }
+                    
+                    // Also check single brand field for backward compatibility
+                    if (category.brand && category.brand._id) {
+                      const brandId = category.brand._id.toString();
+                      if (!allBrands.has(brandId)) {
+                        allBrands.set(brandId, {
+                          brandId: category.brand._id,
+                          brandName: category.brand.name,
+                          brandLogo: category.brand.logo,
+                          brandColor: category.brand.brandColor,
+                          productCount: 0
+                        });
+                      }
+                    }
+                    
+                    const brandsList = Array.from(allBrands.values());
+                    
+                    if (brandsList.length > 0) {
+                      return (
+                        <div className="category-brands-tags">
+                          <div className="brands-tags-label">Brands:</div>
+                          <div className="brands-tags-list">
+                            {brandsList.map((brandCount, index) => (
+                              <button
+                                key={brandCount.brandId || index}
+                                className="brand-tag"
+                                style={{ 
+                                  borderLeft: `3px solid ${brandCount.brandColor || '#667eea'}`,
+                                  backgroundColor: `${brandCount.brandColor || '#667eea'}15`
+                                }}
+                                onClick={() => handleBrandTagClick(brandCount.brandId)}
+                              >
+                                {brandCount.brandLogo?.url && (
+                                  <img src={brandCount.brandLogo.url} alt={brandCount.brandName} className="brand-tag-logo" />
+                                )}
+                                <span className="brand-tag-name">{brandCount.brandName}</span>
+                                <span className="brand-tag-count">({brandCount.productCount})</span>
+                              </button>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
                 <div className="category-card-actions">
                   <button className="btn-text" onClick={() => openEditModal(category)}>
@@ -754,20 +1063,61 @@ function Categories() {
               </div>
               <div className="form-grid">
                 <div className="form-group full-width">
-                  <label>Brand *</label>
-                  <select
-                    value={formData.brand}
-                    onChange={(e) => setFormData({...formData, brand: e.target.value})}
-                    required
-                    className="form-select"
-                  >
-                    <option value="">Select a brand</option>
-                    {brands.map(brand => (
-                      <option key={brand._id} value={brand._id}>
-                        {brand.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label>Brands * (Select multiple)</label>
+                  <div className="brands-multiselect-container">
+                    <div className="brands-selected-list">
+                      {formData.brands.map(brandId => {
+                        const brand = brands.find(b => b._id === brandId)
+                        if (!brand) return null
+                        return (
+                          <span key={brandId} className="selected-brand-tag">
+                            {brand.logo?.url && (
+                              <img src={brand.logo.url} alt={brand.name} className="selected-brand-logo" />
+                            )}
+                            <span>{brand.name}</span>
+                            <button
+                              type="button"
+                              className="remove-brand-btn"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  brands: formData.brands.filter(id => id !== brandId)
+                                })
+                              }}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        )
+                      })}
+                    </div>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const selectedBrandId = e.target.value
+                        if (selectedBrandId && !formData.brands.includes(selectedBrandId)) {
+                          setFormData({
+                            ...formData,
+                            brands: [...formData.brands, selectedBrandId]
+                          })
+                        }
+                        e.target.value = '' // Reset select
+                      }}
+                      className="form-select brands-select"
+                    >
+                      <option value="">Add a brand...</option>
+                      {brands
+                        .filter(brand => !formData.brands.includes(brand._id))
+                        .map(brand => (
+                          <option key={brand._id} value={brand._id}>
+                            {brand.name}
+                          </option>
+                        ))}
+                    </select>
+                    {formData.brands.length === 0 && (
+                      <span className="brands-required-hint">At least one brand is required</span>
+                    )}
+                  </div>
                 </div>
                 <div className="form-group full-width">
                   <label>Category Name *</label>
@@ -863,21 +1213,46 @@ function Categories() {
         </div>
       )}
 
+      {/* Error Popup */}
+      {showErrorPopup && (
+        <div className="modal-overlay" onClick={() => setShowErrorPopup(false)}>
+          <div className="error-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="error-icon">✗</div>
+            <h3>Error!</h3>
+            <p>{errorMessage}</p>
+            <PrimaryButton onClick={() => setShowErrorPopup(false)}>
+              OK
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
+
       {/* Confirm Popup */}
       {showConfirmPopup && (
-        <div className="modal-overlay" onClick={() => setShowConfirmPopup(false)}>
+        <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={() => setShowConfirmPopup(false)}>
           <div className="confirm-popup" onClick={(e) => e.stopPropagation()}>
             <div className="confirm-icon">?</div>
             <h3>Confirm Action</h3>
             <p>{confirmMessage}</p>
             <div className="confirm-actions">
-              <SecondaryButton onClick={() => setShowConfirmPopup(false)}>
+              <SecondaryButton 
+                type="button"
+                onClick={() => setShowConfirmPopup(false)}
+              >
                 Cancel
               </SecondaryButton>
-              <PrimaryButton onClick={() => {
-                setShowConfirmPopup(false)
-                if (confirmAction) confirmAction()
-              }}>
+              <PrimaryButton 
+                type="button"
+                onClick={() => {
+                  console.log('Confirm button clicked, executing action')
+                  setShowConfirmPopup(false)
+                  if (confirmAction) {
+                    confirmAction()
+                  } else {
+                    console.error('No confirm action set')
+                  }
+                }}
+              >
                 Confirm
               </PrimaryButton>
             </div>
@@ -983,6 +1358,236 @@ function Categories() {
                 </PrimaryButton>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Brand Details Modal */}
+      {showBrandModal && selectedBrandDetails && (
+        <div className="modal-overlay" onClick={() => setShowBrandModal(false)}>
+          <div className="modal-content brand-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Brand Details</h2>
+              <button className="modal-close" onClick={() => setShowBrandModal(false)}>×</button>
+            </div>
+            <div className="brand-details-content">
+              <div className="brand-details-header">
+                {selectedBrandDetails.logo?.url && (
+                  <img src={selectedBrandDetails.logo.url} alt={selectedBrandDetails.name} className="brand-details-logo" />
+                )}
+                <div className="brand-details-title">
+                  <h3>{selectedBrandDetails.name}</h3>
+                  <span className={`brand-status-badge ${selectedBrandDetails.isActive ? 'active' : 'inactive'}`}>
+                    {selectedBrandDetails.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+              
+              {selectedBrandDetails.description && (
+                <div className="brand-details-section">
+                  <h4>Description</h4>
+                  <p>{selectedBrandDetails.description}</p>
+                </div>
+              )}
+
+              <div className="brand-details-section">
+                <h4>Brand Information</h4>
+                <div className="brand-info-grid">
+                  {selectedBrandDetails.website && (
+                    <div className="brand-info-item">
+                      <span className="brand-info-label">Website:</span>
+                      <a href={selectedBrandDetails.website} target="_blank" rel="noopener noreferrer" className="brand-info-value">
+                        {selectedBrandDetails.website}
+                      </a>
+                    </div>
+                  )}
+                  {selectedBrandDetails.contactInfo?.email && (
+                    <div className="brand-info-item">
+                      <span className="brand-info-label">Email:</span>
+                      <span className="brand-info-value">{selectedBrandDetails.contactInfo.email}</span>
+                    </div>
+                  )}
+                  {selectedBrandDetails.contactInfo?.phone && (
+                    <div className="brand-info-item">
+                      <span className="brand-info-label">Phone:</span>
+                      <span className="brand-info-value">{selectedBrandDetails.contactInfo.phone}</span>
+                    </div>
+                  )}
+                  {selectedBrandDetails.contactInfo?.address && (
+                    <div className="brand-info-item">
+                      <span className="brand-info-label">Address:</span>
+                      <span className="brand-info-value">{selectedBrandDetails.contactInfo.address}</span>
+                    </div>
+                  )}
+                  {selectedBrandDetails.contactInfo?.country && (
+                    <div className="brand-info-item">
+                      <span className="brand-info-label">Country:</span>
+                      <span className="brand-info-value">{selectedBrandDetails.contactInfo.country}</span>
+                    </div>
+                  )}
+                  <div className="brand-info-item">
+                    <span className="brand-info-label">Brand Color:</span>
+                    <span className="brand-info-value">
+                      <span 
+                        className="brand-color-preview" 
+                        style={{ backgroundColor: selectedBrandDetails.brandColor || '#667eea' }}
+                      ></span>
+                      {selectedBrandDetails.brandColor || '#667eea'}
+                    </span>
+                  </div>
+                  <div className="brand-info-item">
+                    <span className="brand-info-label">Total Products:</span>
+                    <span className="brand-info-value">{selectedBrandDetails.productCount || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div className="modal-actions brand-modal-actions">
+              <SecondaryButton 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleEditBrand()
+                }}
+              >
+                Edit Brand
+              </SecondaryButton>
+              <button 
+                type="button"
+                className="btn-delete-brand"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  console.log('Delete button clicked, brand:', selectedBrandDetails)
+                  handleDeleteBrand()
+                }}
+              >
+                Delete Brand
+              </button>
+              <PrimaryButton 
+                type="button"
+                onClick={() => setShowBrandModal(false)}
+              >
+                Close
+              </PrimaryButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Brand Edit Modal */}
+      {showBrandEditModal && selectedBrandDetails && (
+        <div className="modal-overlay" onClick={() => setShowBrandEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Brand</h2>
+              <button className="modal-close" onClick={() => setShowBrandEditModal(false)}>×</button>
+            </div>
+            <form onSubmit={handleUpdateBrand} className="category-form">
+              <div className="form-section-header">
+                <h3>Brand Information</h3>
+              </div>
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label>Brand Name *</label>
+                  <input
+                    type="text"
+                    value={brandFormData.name}
+                    onChange={(e) => setBrandFormData({...brandFormData, name: e.target.value})}
+                    required
+                    placeholder="Enter brand name"
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label>Description</label>
+                  <textarea
+                    value={brandFormData.description}
+                    onChange={(e) => setBrandFormData({...brandFormData, description: e.target.value})}
+                    rows="8"
+                    placeholder="Enter brand description (up to 5000 characters)"
+                    style={{ minHeight: '150px', resize: 'vertical' }}
+                  />
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    {brandFormData.description.length}/5000 characters
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label>Brand Color</label>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <input
+                      type="color"
+                      value={brandFormData.brandColor}
+                      onChange={(e) => setBrandFormData({...brandFormData, brandColor: e.target.value})}
+                      style={{ width: '60px', height: '40px', cursor: 'pointer' }}
+                    />
+                    <input
+                      type="text"
+                      value={brandFormData.brandColor}
+                      onChange={(e) => setBrandFormData({...brandFormData, brandColor: e.target.value})}
+                      placeholder="#667eea"
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label>Brand Logo (Optional)</label>
+                  <div className="image-upload-container">
+                    {brandLogoPreview ? (
+                      <div className="image-preview-wrapper">
+                        <img src={brandLogoPreview} alt="Logo preview" className="image-preview" />
+                        <button 
+                          type="button" 
+                          className="remove-image-btn"
+                          onClick={handleRemoveBrandImage}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="image-upload-placeholder">
+                        <input
+                          type="file"
+                          id="brand-logo-upload"
+                          accept="image/*"
+                          onChange={handleBrandFileChange}
+                          className="image-file-input"
+                        />
+                        <label htmlFor="brand-logo-upload" className="image-upload-label">
+                          <span className="upload-icon">📷</span>
+                          <span>Click to upload logo</span>
+                          <small>PNG, JPG up to 5MB</small>
+                        </label>
+                      </div>
+                    )}
+                    {!brandLogoPreview && brandFormData.logo && (
+                      <div className="image-url-input-wrapper">
+                        <input
+                          type="url"
+                          value={brandFormData.logo}
+                          onChange={(e) => setBrandFormData({...brandFormData, logo: e.target.value})}
+                          placeholder="Or enter logo URL"
+                          className="image-url-input"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {uploading && (
+                    <div className="upload-status">Uploading image...</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <SecondaryButton type="button" onClick={() => setShowBrandEditModal(false)}>
+                  Cancel
+                </SecondaryButton>
+                <PrimaryButton type="submit" disabled={uploading}>
+                  {uploading ? 'Uploading...' : 'Update Brand'}
+                </PrimaryButton>
+              </div>
+            </form>
           </div>
         </div>
       )}

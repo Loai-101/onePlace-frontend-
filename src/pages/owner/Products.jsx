@@ -22,8 +22,10 @@ function Products() {
   const [brands, setBrands] = useState([])
   const [showConfirmPopup, setShowConfirmPopup] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [showErrorPopup, setShowErrorPopup] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
   const [confirmMessage, setConfirmMessage] = useState('')
   const [confirmAction, setConfirmAction] = useState(null)
   const [excelFile, setExcelFile] = useState(null)
@@ -264,8 +266,8 @@ function Products() {
         }
       } catch (error) {
         console.error('Error deleting product:', error)
-        setSuccessMessage('Error deleting product')
-        setShowSuccessPopup(true)
+        setErrorMessage('Error deleting product: ' + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
       }
     })
     setShowConfirmPopup(true)
@@ -297,13 +299,13 @@ function Products() {
           setSuccessMessage(`Product ${action}d successfully!`)
           setShowSuccessPopup(true)
         } else {
-          setSuccessMessage(data.message)
-          setShowSuccessPopup(true)
+          setErrorMessage(data.message || `Error ${action}ing product`)
+          setShowErrorPopup(true)
         }
       } catch (error) {
         console.error(`Error ${action}ing product:`, error)
-        setSuccessMessage(`Error ${action}ing product`)
-        setShowSuccessPopup(true)
+        setErrorMessage(`Error ${action}ing product: ` + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
       }
     })
     setShowConfirmPopup(true)
@@ -498,13 +500,13 @@ function Products() {
         setSuccessMessage(data.message)
         setShowSuccessPopup(true)
       } else {
-        setSuccessMessage(data.message || 'Error importing products')
-        setShowSuccessPopup(true)
+        setErrorMessage(data.message || 'Error importing products')
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Import error:', error)
-      setSuccessMessage('Error importing products: ' + error.message)
-      setShowSuccessPopup(true)
+      setErrorMessage('Error importing products: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     } finally {
       setImporting(false)
     }
@@ -665,18 +667,18 @@ function Products() {
       
       if (!response.ok) {
         if (response.status === 404) {
-          setSuccessMessage('API endpoint not found. Please check if the server is running.')
+          setErrorMessage('API endpoint not found. Please check if the server is running.')
         } else if (response.status === 401) {
-          setSuccessMessage('Unauthorized. Please login again.')
+          setErrorMessage('Unauthorized. Please login again.')
         } else if (response.status === 400) {
           const errorMsg = data.errors 
             ? data.errors.map(e => `${e.field}: ${e.message}`).join(', ')
             : data.message || 'Validation error'
-          setSuccessMessage(errorMsg)
+          setErrorMessage(errorMsg)
         } else {
-          setSuccessMessage(data.message || `Error: ${response.status} ${response.statusText}`)
+          setErrorMessage(data.message || `Error: ${response.status} ${response.statusText}`)
         }
-        setShowSuccessPopup(true)
+        setShowErrorPopup(true)
         return
       }
       
@@ -687,13 +689,13 @@ function Products() {
         setEditingProduct(null)
         loadProducts()
       } else {
-        setSuccessMessage(data.message || 'Error saving product')
-        setShowSuccessPopup(true)
+        setErrorMessage(data.message || 'Error saving product')
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Error saving product:', error)
-      setSuccessMessage('Error saving product: ' + error.message)
-      setShowSuccessPopup(true)
+      setErrorMessage('Error saving product: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     } finally {
       setUploadingProduct(false)
     }
@@ -947,6 +949,20 @@ function Products() {
             <h3>Success!</h3>
             <p>{successMessage}</p>
             <PrimaryButton onClick={() => setShowSuccessPopup(false)}>
+              OK
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
+
+      {/* Error Popup */}
+      {showErrorPopup && (
+        <div className="modal-overlay" onClick={() => setShowErrorPopup(false)}>
+          <div className="error-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="error-icon">✗</div>
+            <h3>Error!</h3>
+            <p>{errorMessage}</p>
+            <PrimaryButton onClick={() => setShowErrorPopup(false)}>
               OK
             </PrimaryButton>
           </div>

@@ -429,6 +429,44 @@
   line-height: 1.5;
 }
 
+/* Error Popup */
+.error-popup {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: popIn 0.3s ease-out;
+}
+
+.error-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: white;
+  font-weight: bold;
+}
+
+.error-popup h3 {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  color: #1a1a1a;
+}
+
+.error-popup p {
+  margin: 0 0 24px 0;
+  color: #555;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
 /* Confirm Popup */
 .confirm-popup {
   background: white;

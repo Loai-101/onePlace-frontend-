@@ -18,8 +18,10 @@ function Brands() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedBrand, setSelectedBrand] = useState(null)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [showErrorPopup, setShowErrorPopup] = useState(false)
   const [showConfirmPopup, setShowConfirmPopup] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
   const [confirmMessage, setConfirmMessage] = useState('')
   const [confirmAction, setConfirmAction] = useState(null)
   const [formData, setFormData] = useState({
@@ -141,13 +143,13 @@ function Brands() {
         
         console.error('Brand creation failed:', data)
         console.error('Error message:', errorMsg)
-        setSuccessMessage(errorMsg)
-        setShowSuccessPopup(true)
+        setErrorMessage(errorMsg)
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Error creating brand:', error)
-      setSuccessMessage('Error creating brand: ' + error.message)
-      setShowSuccessPopup(true)
+      setErrorMessage('Error creating brand: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     }
   }
 
@@ -188,20 +190,20 @@ function Brands() {
         setSuccessMessage('Brand updated successfully!')
         setShowSuccessPopup(true)
       } else {
-        setSuccessMessage(data.message)
-        setShowSuccessPopup(true)
+        setErrorMessage(data.message || 'Error updating brand')
+        setShowErrorPopup(true)
       }
     } catch (error) {
       console.error('Error updating brand:', error)
-      setSuccessMessage('Error updating brand')
-      setShowSuccessPopup(true)
+      setErrorMessage('Error updating brand: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
     }
   }
 
   const handleDeleteBrand = (brandId, brandName, productCount) => {
     if (productCount > 0) {
-      setSuccessMessage(`Cannot delete "${brandName}". It has ${productCount} products associated with it.`)
-      setShowSuccessPopup(true)
+      setErrorMessage(`Cannot delete "${brandName}". It has ${productCount} products associated with it.`)
+      setShowErrorPopup(true)
       return
     }
 
@@ -223,13 +225,13 @@ function Brands() {
           setSuccessMessage(data.message)
           setShowSuccessPopup(true)
         } else {
-          setSuccessMessage(data.message)
-          setShowSuccessPopup(true)
+          setErrorMessage(data.message || 'Error deleting brand')
+          setShowErrorPopup(true)
         }
       } catch (error) {
         console.error('Error deleting brand:', error)
-        setSuccessMessage('Error deleting brand')
-        setShowSuccessPopup(true)
+        setErrorMessage('Error deleting brand: ' + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
       }
     })
     setShowConfirmPopup(true)
@@ -260,13 +262,13 @@ function Brands() {
           setSuccessMessage(`Brand ${action}d successfully!`)
           setShowSuccessPopup(true)
         } else {
-          setSuccessMessage(data.message)
-          setShowSuccessPopup(true)
+          setErrorMessage(data.message || `Error ${action}ing brand`)
+          setShowErrorPopup(true)
         }
       } catch (error) {
         console.error(`Error ${action}ing brand:`, error)
-        setSuccessMessage(`Error ${action}ing brand`)
-        setShowSuccessPopup(true)
+        setErrorMessage(`Error ${action}ing brand: ` + (error.message || 'Unknown error'))
+        setShowErrorPopup(true)
       }
     })
     setShowConfirmPopup(true)
@@ -309,8 +311,8 @@ function Brands() {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setSuccessMessage('Please select an image file')
-        setShowSuccessPopup(true)
+        setErrorMessage('Please select an image file')
+        setShowErrorPopup(true)
         return
       }
       
@@ -519,9 +521,13 @@ function Brands() {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    rows="3"
-                    placeholder="Enter brand description"
+                    rows="8"
+                    placeholder="Enter brand description (up to 5000 characters)"
+                    style={{ minHeight: '150px', resize: 'vertical' }}
                   />
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    {formData.description.length}/5000 characters
+                  </div>
                 </div>
                 <div className="form-group full-width">
                   <label>Brand Logo (Optional)</label>
@@ -632,9 +638,13 @@ function Brands() {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    rows="3"
-                    placeholder="Enter brand description"
+                    rows="8"
+                    placeholder="Enter brand description (up to 5000 characters)"
+                    style={{ minHeight: '150px', resize: 'vertical' }}
                   />
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    {formData.description.length}/5000 characters
+                  </div>
                 </div>
                 <div className="form-group full-width">
                   <label>Brand Logo (Optional)</label>
@@ -725,6 +735,20 @@ function Brands() {
             <h3>Success!</h3>
             <p>{successMessage}</p>
             <PrimaryButton onClick={() => setShowSuccessPopup(false)}>
+              OK
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
+
+      {/* Error Popup */}
+      {showErrorPopup && (
+        <div className="modal-overlay" onClick={() => setShowErrorPopup(false)}>
+          <div className="error-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="error-icon">✗</div>
+            <h3>Error!</h3>
+            <p>{errorMessage}</p>
+            <PrimaryButton onClick={() => setShowErrorPopup(false)}>
               OK
             </PrimaryButton>
           </div>

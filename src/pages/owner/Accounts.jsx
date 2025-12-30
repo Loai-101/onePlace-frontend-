@@ -151,12 +151,44 @@ function Accounts() {
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(account => 
-        account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.vat.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.crNumber.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      const searchLower = searchTerm.toLowerCase()
+      filtered = filtered.filter(account => {
+        // Search in name
+        const nameMatch = account.name?.toLowerCase().includes(searchLower) || false
+        
+        // Search in address (handle address as object)
+        const addressParts = account.address ? [
+          account.address.flatShopNo,
+          account.address.building,
+          account.address.road,
+          account.address.block,
+          account.address.area
+        ].filter(Boolean).join(' ') : ''
+        const addressMatch = addressParts.toLowerCase().includes(searchLower)
+        
+        // Search in VAT number
+        const vatMatch = account.vat?.toLowerCase().includes(searchLower) || false
+        
+        // Search in CR number
+        const crMatch = account.crNumber?.toLowerCase().includes(searchLower) || false
+        
+        // Search in phone
+        const phoneMatch = account.phone?.toLowerCase().includes(searchLower) || false
+        
+        // Search in email
+        const emailMatch = account.email?.toLowerCase().includes(searchLower) || false
+        
+        // Search in staff names
+        const staffMatch = account.staff && Array.isArray(account.staff) 
+          ? account.staff.some(staff => 
+              staff.name?.toLowerCase().includes(searchLower) ||
+              staff.phone?.toLowerCase().includes(searchLower) ||
+              staff.email?.toLowerCase().includes(searchLower)
+            )
+          : false
+        
+        return nameMatch || addressMatch || vatMatch || crMatch || phoneMatch || emailMatch || staffMatch
+      })
     }
 
     setFilteredAccounts(filtered)
