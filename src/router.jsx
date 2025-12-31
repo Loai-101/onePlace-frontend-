@@ -32,6 +32,7 @@ import Users from './pages/owner/Users.jsx'
 import Settings from './pages/owner/Settings.jsx'
 import Accounts from './pages/owner/Accounts.jsx'
 import OwnerCalendar from './pages/owner/Calendar.jsx'
+import Reports from './pages/owner/Reports.jsx'
 
 // Clinics pages
 import Clinics from './pages/clinics/Clinics.jsx'
@@ -96,6 +97,7 @@ export default function Router() {
         <Route path="owner/settings" element={<Settings />} />
         <Route path="owner/accounts" element={<Accounts />} />
         <Route path="owner/calendar" element={<OwnerCalendar />} />
+        <Route path="owner/reports" element={<Reports />} />
 
         {/* Clinics routes */}
         <Route path="clinics" element={<Clinics />} />

@@ -25,6 +25,7 @@ function ProductForm() {
     name: '',
     sku: '',
     brand: '',
+    mainCategory: '',
     category: '',
     description: '',
     price: '',
@@ -45,6 +46,7 @@ function ProductForm() {
     },
     discountPercent: 0
   })
+  const [filteredCategories, setFilteredCategories] = useState([])
 
   useEffect(() => {
     if (token) {
@@ -92,6 +94,7 @@ function ProductForm() {
           name: product.name || '',
           sku: product.sku || '',
           brand: product.brand?._id || '',
+          mainCategory: product.mainCategory || '',
           category: product.category?._id || '',
           description: product.description || '',
           price: product.price || '',
@@ -116,9 +119,13 @@ function ProductForm() {
     }
   }
 
-  const loadCategories = async () => {
+  const loadCategories = async (mainCategoryFilter = null) => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/categories?includeInactive=false`, {
+      let url = `${getApiUrl()}/api/categories?includeInactive=false`
+      if (mainCategoryFilter) {
+        url += `&mainCategory=${mainCategoryFilter}`
+      }
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -127,11 +134,23 @@ function ProductForm() {
       const data = await response.json()
       if (data.success) {
         setCategories(data.data)
+        setFilteredCategories(data.data)
       }
     } catch (error) {
       console.error('Error loading categories:', error)
     }
   }
+
+  // Filter categories when mainCategory changes
+  useEffect(() => {
+    if (formData.mainCategory) {
+      loadCategories(formData.mainCategory)
+      // Reset category when mainCategory changes
+      setFormData(prev => ({ ...prev, category: '' }))
+    } else {
+      loadCategories()
+    }
+  }, [formData.mainCategory, token])
 
   const loadBrands = async () => {
     try {
@@ -380,6 +399,30 @@ function ProductForm() {
               />
             </div>
             
+            <div className="form-group full-width">
+              <label>Main Category *</label>
+              <select
+                value={formData.mainCategory}
+                onChange={(e) => setFormData({...formData, mainCategory: e.target.value, category: ''})}
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: '10px 12px', 
+                  fontSize: '14px', 
+                  border: '1px solid #e0e0e0', 
+                  borderRadius: '6px',
+                  backgroundColor: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="">Select a main category *</option>
+                <option value="medical">Medical</option>
+                <option value="it-solutions">IT Solutions</option>
+                <option value="pharmacy">Pharmacy</option>
+                <option value="salon">Salon</option>
+              </select>
+            </div>
+            
             <div className="form-group">
               <label>Product Name *</label>
               <input
@@ -397,11 +440,12 @@ function ProductForm() {
                 value={formData.category}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
                 required
+                disabled={!formData.mainCategory}
               >
-                <option value="">Select a category</option>
-                {categories.map(category => (
+                <option value="">{formData.mainCategory ? 'Select a category' : 'Select main category first'}</option>
+                {filteredCategories.map(category => (
                   <option key={category._id} value={category._id}>
-                    {category.name} ({category.brand?.name})
+                    {category.name} {category.brand?.name ? `(${category.brand.name})` : ''}
                   </option>
                 ))}
               </select>

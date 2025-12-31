@@ -116,12 +116,40 @@ function Header() {
               onClick={() => setShowUserMenu(!showUserMenu)}
               title={`${user.name} (${getRoleDisplayName(user.role)})`}
             >
-              {getUserInitials(user.name)}
+              {user.profile?.avatar ? (
+                <img 
+                  src={user.profile.avatar} 
+                  alt={user.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                  onError={(e) => {
+                    // Fallback to initials if image fails to load
+                    e.target.style.display = 'none'
+                    const parent = e.target.parentElement
+                    if (parent && !parent.textContent.trim()) {
+                      parent.textContent = getUserInitials(user.name)
+                    }
+                  }}
+                />
+              ) : (
+                getUserInitials(user.name)
+              )}
             </div>
             
             {showUserMenu && (
               <div className="user-menu">
                 <div className="user-info">
+                  {user.profile?.avatar && (
+                    <div className="user-menu-avatar">
+                      <img 
+                        src={user.profile.avatar} 
+                        alt={user.name}
+                        style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.style.display = 'none'
+                        }}
+                      />
+                    </div>
+                  )}
                   <div className="user-name">{user.name}</div>
                   <div className="user-role">{getRoleDisplayName(user.role)}</div>
                   <div className="user-email">{user.email}</div>
@@ -130,16 +158,6 @@ function Header() {
                 <div className="user-menu-divider"></div>
                 
                 <div className="user-menu-actions">
-                  {user.role === 'owner' && (
-                    <Link to="/owner" onClick={() => setShowUserMenu(false)}>
-                      Dashboard
-                    </Link>
-                  )}
-                  {user.role === 'accountant' && (
-                    <Link to="/accountant" onClick={() => setShowUserMenu(false)}>
-                      Dashboard
-                    </Link>
-                  )}
                   <button onClick={handleLogout} className="logout-button">
                     Logout
                   </button>

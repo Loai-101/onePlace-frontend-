@@ -7,6 +7,7 @@ import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import Loading from '../../components/Loading.jsx'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Categories.css'
 
 function Categories() {
@@ -17,6 +18,7 @@ function Categories() {
   const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedMainCategory, setSelectedMainCategory] = useState('all')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -33,6 +35,7 @@ function Categories() {
     description: '',
     brand: '', // Keep for backward compatibility
     brands: [], // New: array of brand IDs
+    mainCategory: '',
     isActive: true,
     image: ''
   })
@@ -40,9 +43,19 @@ function Categories() {
   const [imagePreview, setImagePreview] = useState('')
   const [uploading, setUploading] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showImportModal, '.modal-content')
+  usePopupFocus(showDownloadModal, '.modal-content')
+  usePopupFocus(showSuccessPopup)
+  usePopupFocus(showErrorPopup)
+  usePopupFocus(showConfirmPopup)
+  
   const [excelFile, setExcelFile] = useState(null)
   const [importing, setImporting] = useState(false)
   const [importResults, setImportResults] = useState(null)
+  const [importMainCategory, setImportMainCategory] = useState('')
   const [showBrandModal, setShowBrandModal] = useState(false)
   const [selectedBrandDetails, setSelectedBrandDetails] = useState(null)
   const [showBrandEditModal, setShowBrandEditModal] = useState(false)
@@ -64,7 +77,7 @@ function Categories() {
 
   useEffect(() => {
     filterCategories()
-  }, [categories, searchTerm, selectedBrand])
+  }, [categories, searchTerm, selectedMainCategory, selectedBrand])
 
   const loadBrands = async () => {
     try {
@@ -109,11 +122,29 @@ function Categories() {
   const filterCategories = () => {
     let filtered = categories
 
-    // Filter by brand
-    if (selectedBrand !== 'all') {
+    // Filter by main category first
+    if (selectedMainCategory !== 'all') {
       filtered = filtered.filter(category => 
-        category.brand && category.brand._id === selectedBrand
+        category.mainCategory === selectedMainCategory
       )
+    }
+
+    // Filter by brand (check both old single brand and new brands array)
+    if (selectedBrand !== 'all') {
+      filtered = filtered.filter(category => {
+        // Check if brand matches in the old single brand field
+        if (category.brand && category.brand._id === selectedBrand) {
+          return true
+        }
+        // Check if brand matches in the new brands array
+        if (category.brands && Array.isArray(category.brands)) {
+          return category.brands.some(brand => 
+            (typeof brand === 'object' && brand._id === selectedBrand) ||
+            brand === selectedBrand
+          )
+        }
+        return false
+      })
     }
 
     // Filter by search term
@@ -149,6 +180,7 @@ function Categories() {
       const requestBody = {
         name: formData.name,
         description: formData.description,
+        mainCategory: formData.mainCategory || undefined,
         isActive: formData.isActive,
         image: {
           url: imageUrl || undefined,
@@ -216,6 +248,7 @@ function Categories() {
       const requestBody = {
         name: formData.name,
         description: formData.description,
+        mainCategory: formData.mainCategory || undefined,
         isActive: formData.isActive,
         image: {
           url: imageUrl || undefined,
@@ -354,6 +387,7 @@ function Categories() {
       description: category.description || '',
       brand: category.brand?._id || '', // Keep for backward compatibility
       brands: categoryBrands, // Array of brand IDs
+      mainCategory: category.mainCategory || '',
       isActive: category.isActive !== false,
       image: category.image?.url || ''
     })
@@ -368,6 +402,7 @@ function Categories() {
       description: '',
       brand: '',
       brands: [],
+      mainCategory: '',
       isActive: true,
       image: ''
     })
@@ -471,11 +506,15 @@ function Categories() {
     }
   }
 
-  const handleDownloadTemplate = () => {
+  const handleDownloadTemplate = (mainCategory = null) => {
+    // Use provided main category, or selected importMainCategory, or 'medical' as default
+    const defaultMainCategory = mainCategory || importMainCategory || 'medical'
+    
     // Create template data
     const templateData = [
       {
         'Category Name': 'Drill Bits',
+        'Main Category': defaultMainCategory,
         'Brand Name': 'Example Brand',
         'Description': 'Various dental drill bits',
         'Is Active': 'true',
@@ -483,6 +522,7 @@ function Categories() {
       },
       {
         'Category Name': 'Composite Materials',
+        'Main Category': defaultMainCategory,
         'Brand Name': 'Example Brand',
         'Description': 'Composite resins',
         'Is Active': 'true',
@@ -491,7 +531,7 @@ function Categories() {
     ]
 
     // Convert to CSV format
-    const headers = ['Category Name', 'Brand Name', 'Description', 'Is Active', 'Image URL']
+    const headers = ['Category Name', 'Main Category', 'Brand Name', 'Description', 'Is Active', 'Image URL']
     const csvContent = [
       headers.join(','),
       ...templateData.map(row => 
@@ -507,11 +547,89 @@ function Categories() {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', 'categories_template.csv')
+    const categoryName = defaultMainCategory !== 'medical' ? `_${defaultMainCategory}` : ''
+    link.setAttribute('download', `categories_template${categoryName}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  const handleDownloadCategories = (mainCategory = 'all') => {
+    // Filter categories by main category if specified
+    let categoriesToDownload = categories
+    if (mainCategory !== 'all') {
+      categoriesToDownload = categories.filter(c => c.mainCategory === mainCategory)
+    }
+
+    if (categoriesToDownload.length === 0) {
+      setErrorMessage(`No categories available${mainCategory !== 'all' ? ` for ${mainCategory}` : ''}`)
+      setShowErrorPopup(true)
+      setShowDownloadModal(false)
+      return
+    }
+
+    // Convert categories to CSV format
+    const headers = ['Category Name', 'Main Category', 'Brand Name', 'Description', 'Is Active', 'Image URL']
+    
+    const csvData = categoriesToDownload.map(category => {
+      // Get brand name(s) - handle both old single brand and new brands array
+      let brandNames = []
+      if (category.brand && category.brand.name) {
+        brandNames.push(category.brand.name)
+      }
+      if (category.brands && Array.isArray(category.brands)) {
+        category.brands.forEach(brand => {
+          if (typeof brand === 'object' && brand.name) {
+            brandNames.push(brand.name)
+          }
+        })
+      }
+      const brandName = brandNames.length > 0 ? brandNames.join(', ') : ''
+      
+      // Get image URL
+      const imageUrl = category.image?.url || ''
+      
+      return {
+        'Category Name': category.name || '',
+        'Main Category': category.mainCategory || '',
+        'Brand Name': brandName,
+        'Description': category.description || '',
+        'Is Active': category.isActive ? 'true' : 'false',
+        'Image URL': imageUrl
+      }
+    })
+
+    // Convert to CSV format
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => 
+        headers.map(header => {
+          const value = row[header] || ''
+          return `"${value.toString().replace(/"/g, '""')}"`
+        }).join(',')
+      )
+    ].join('\n')
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    const timestamp = new Date().toISOString().split('T')[0]
+    const categorySuffix = mainCategory !== 'all' ? `_${mainCategory}` : ''
+    link.setAttribute('download', `categories_export${categorySuffix}_${timestamp}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    setSuccessMessage(`Successfully downloaded ${categoriesToDownload.length} categor${categoriesToDownload.length !== 1 ? 'ies' : 'y'}${mainCategory !== 'all' ? ` (${mainCategory})` : ''}`)
+    setShowSuccessPopup(true)
+    setShowDownloadModal(false)
+    
+    // Clean up the blob URL
+    URL.revokeObjectURL(url)
   }
 
   const handleBulkImport = async () => {
@@ -525,6 +643,9 @@ function Categories() {
       setImporting(true)
       const formData = new FormData()
       formData.append('excelFile', excelFile)
+      if (importMainCategory) {
+        formData.append('defaultMainCategory', importMainCategory)
+      }
 
       const response = await fetch(`${getApiUrl()}/api/categories/bulk-import`, {
         method: 'POST',
@@ -765,28 +886,58 @@ function Categories() {
       <div className="page-header">
         <h1 className="page-title">Category Management</h1>
         <div className="category-count-badge">
-          {categories.length} Categories
+          {filteredCategories.length} Categories{selectedMainCategory !== 'all' ? ` (${selectedMainCategory})` : ''}
         </div>
       </div>
       
-      <PageSection title="Categories">
+      <PageSection>
         <div className="categories-toolbar">
           <div className="categories-toolbar-left">
             <PrimaryButton onClick={openCreateModal}>
               + New Category
             </PrimaryButton>
             <SecondaryButton onClick={() => setShowImportModal(true)}>
-              📊 Import from Excel
+              Import from Excel
+            </SecondaryButton>
+            <SecondaryButton onClick={() => setShowDownloadModal(true)}>
+              Download Categories
             </SecondaryButton>
           </div>
           <div className="filters">
+            <select
+              value={selectedMainCategory}
+              onChange={(e) => {
+                setSelectedMainCategory(e.target.value)
+                // Reset brand filter when main category changes
+                setSelectedBrand('all')
+              }}
+              className="filter-select"
+            >
+              <option value="all">All Main Categories</option>
+              <option value="medical">Medical</option>
+              <option value="it-solutions">IT Solutions</option>
+              <option value="pharmacy">Pharmacy</option>
+              <option value="salon">Salon</option>
+            </select>
             <select
               value={selectedBrand}
               onChange={(e) => setSelectedBrand(e.target.value)}
               className="brand-filter"
             >
               <option value="all">All Brands</option>
-              {brands.map(brand => (
+              {brands
+                .filter(brand => {
+                  // If main category is selected, only show brands that have categories in that main category
+                  if (selectedMainCategory !== 'all') {
+                    return categories.some(cat => 
+                      (cat.brands && cat.brands.some(b => b._id === brand._id) || 
+                       cat.brand?._id === brand._id) && 
+                      cat.mainCategory === selectedMainCategory
+                    )
+                  }
+                  return true
+                })
+                .map(brand => (
                 <option key={brand._id} value={brand._id}>
                   {brand.name}
                 </option>
@@ -980,6 +1131,21 @@ function Categories() {
                   />
                 </div>
                 <div className="form-group full-width">
+                  <label>Main Category *</label>
+                  <select
+                    value={formData.mainCategory}
+                    onChange={(e) => setFormData({...formData, mainCategory: e.target.value})}
+                    className="form-select"
+                    required
+                  >
+                    <option value="">Select a main category *</option>
+                    <option value="medical">Medical</option>
+                    <option value="it-solutions">IT Solutions</option>
+                    <option value="pharmacy">Pharmacy</option>
+                    <option value="salon">Salon</option>
+                  </select>
+                </div>
+                <div className="form-group full-width">
                   <label>Description</label>
                   <textarea
                     value={formData.description}
@@ -1130,6 +1296,21 @@ function Categories() {
                   />
                 </div>
                 <div className="form-group full-width">
+                  <label>Main Category *</label>
+                  <select
+                    value={formData.mainCategory}
+                    onChange={(e) => setFormData({...formData, mainCategory: e.target.value})}
+                    className="form-select"
+                    required
+                  >
+                    <option value="">Select a main category *</option>
+                    <option value="medical">Medical</option>
+                    <option value="it-solutions">IT Solutions</option>
+                    <option value="pharmacy">Pharmacy</option>
+                    <option value="salon">Salon</option>
+                  </select>
+                </div>
+                <div className="form-group full-width">
                   <label>Description</label>
                   <textarea
                     value={formData.description}
@@ -1263,31 +1444,82 @@ function Categories() {
       {/* Import Excel Modal */}
       {showImportModal && (
         <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ 
+            maxWidth: '800px', 
+            width: '90%',
+            maxHeight: '95vh', 
+            overflowY: 'visible',
+            margin: 'auto',
+            position: 'relative'
+          }}>
             <div className="modal-header">
               <h2>Import Categories from Excel</h2>
-              <button className="modal-close" onClick={() => setShowImportModal(false)}>×</button>
+              <button className="modal-close" onClick={() => {
+                setShowImportModal(false)
+                setImportMainCategory('')
+                setExcelFile(null)
+              }}>×</button>
             </div>
-            <div className="import-modal-content">
-              <div className="import-instructions">
-                <h3>Instructions:</h3>
-                <ul className="instructions-list">
-                  <li>Download the template file to see the required format</li>
-                  <li>Required columns: <strong>Category Name</strong>, <strong>Brand Name</strong></li>
-                  <li>Optional columns: <strong>Description</strong>, <strong>Is Active</strong> (true/false), <strong>Image URL</strong></li>
-                  <li>Brand Name must match an existing brand in the system</li>
-                  <li>Maximum file size: 10MB</li>
-                </ul>
+            <div className="import-modal-content" style={{ padding: '16px', overflowY: 'visible', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {/* Default Main Category Section - At the top */}
+              <div className="import-main-category-section" style={{ 
+                marginBottom: '16px', 
+                padding: '12px', 
+                background: '#f5f5f5', 
+                borderRadius: '8px', 
+                border: '1px solid #e0e0e0',
+                width: '100%',
+                maxWidth: '600px'
+              }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#333', textAlign: 'center' }}>
+                  Default Main Category (if not specified in Excel):
+                </label>
+                <select
+                  value={importMainCategory}
+                  onChange={(e) => setImportMainCategory(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', fontSize: '14px', border: '1px solid #e0e0e0', borderRadius: '6px', marginBottom: '6px' }}
+                >
+                  <option value="">Select a main category (Optional - can be specified in Excel)</option>
+                  <option value="medical">Medical</option>
+                  <option value="it-solutions">IT Solutions</option>
+                  <option value="pharmacy">Pharmacy</option>
+                  <option value="salon">Salon</option>
+                </select>
+                <small style={{ display: 'block', color: '#666', fontSize: '11px', lineHeight: '1.3', textAlign: 'center' }}>
+                  If Main Category is not specified in the Excel file, this value will be used for all categories
+                </small>
               </div>
 
-              <div className="import-actions">
-                <SecondaryButton onClick={handleDownloadTemplate}>
-                  Download Template
+              {/* Download Template Button */}
+              <div className="import-actions" style={{ marginBottom: '16px', textAlign: 'center', width: '100%', maxWidth: '600px' }}>
+                <SecondaryButton onClick={handleDownloadTemplate} style={{ width: '100%' }}>
+                  📥 Download Template
                 </SecondaryButton>
               </div>
 
-              <div className="file-upload-section">
-                <label className="file-upload-label">
+              {/* Instructions Section */}
+              <div className="import-instructions" style={{ 
+                marginBottom: '16px', 
+                padding: '12px', 
+                background: '#f9f9f9', 
+                borderRadius: '8px', 
+                border: '1px solid #e0e0e0',
+                width: '100%',
+                maxWidth: '600px'
+              }}>
+                <h3 style={{ marginTop: '0', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#333', textAlign: 'center' }}>Instructions:</h3>
+                <ul className="instructions-list" style={{ margin: '0', paddingLeft: '18px', lineHeight: '1.5', fontSize: '12px', color: '#555' }}>
+                  <li style={{ marginBottom: '4px' }}>Download the template file to see the required format</li>
+                  <li style={{ marginBottom: '4px' }}>Required columns: <strong>Category Name</strong>, <strong>Main Category</strong> (medical/it-solutions/pharmacy/salon), <strong>Brand Name</strong></li>
+                  <li style={{ marginBottom: '4px' }}>Optional columns: <strong>Description</strong>, <strong>Is Active</strong> (true/false), <strong>Image URL</strong></li>
+                  <li style={{ marginBottom: '4px' }}>Main Category must be one of: <strong>medical</strong>, <strong>it-solutions</strong>, <strong>pharmacy</strong>, or <strong>salon</strong></li>
+                  <li style={{ marginBottom: '4px' }}>Brand Name must match an existing brand in the system</li>
+                  <li style={{ marginBottom: '0' }}>Maximum file size: 10MB</li>
+                </ul>
+              </div>
+
+              <div className="file-upload-section" style={{ marginBottom: '16px', width: '100%', maxWidth: '600px' }}>
+                <label className="file-upload-label" style={{ display: 'block' }}>
                   <input
                     type="file"
                     accept=".xlsx,.xls,.csv"
@@ -1344,6 +1576,7 @@ function Categories() {
                   type="button" 
                   onClick={() => {
                     setShowImportModal(false)
+                    setImportMainCategory('')
                     setExcelFile(null)
                     setImportResults(null)
                   }}
@@ -1356,6 +1589,73 @@ function Categories() {
                 >
                   {importing ? 'Importing...' : 'Import Categories'}
                 </PrimaryButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Download Categories Modal */}
+      {showDownloadModal && (
+        <div className="modal-overlay" onClick={() => setShowDownloadModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>Download Categories</h2>
+              <button className="modal-close" onClick={() => setShowDownloadModal(false)}>×</button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ marginBottom: '20px', color: '#555', fontSize: '14px', fontWeight: '500' }}>
+                Select a main category to download categories from the database:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadCategories('all')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download All Categories
+                </PrimaryButton>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadCategories('medical')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download Medical Categories
+                </PrimaryButton>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadCategories('it-solutions')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download IT Solutions Categories
+                </PrimaryButton>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadCategories('pharmacy')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download Pharmacy Categories
+                </PrimaryButton>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadCategories('salon')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download Salon Categories
+                </PrimaryButton>
+              </div>
+              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e0e0e0' }}>
+                <SecondaryButton 
+                  onClick={() => setShowDownloadModal(false)}
+                  style={{ width: '100%' }}
+                >
+                  Cancel
+                </SecondaryButton>
               </div>
             </div>
           </div>

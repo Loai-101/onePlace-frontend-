@@ -257,6 +257,30 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(updatedUser))
   }
 
+  const refreshUser = async () => {
+    try {
+      const storedToken = localStorage.getItem('token')
+      if (!storedToken) return
+
+      const response = await fetch(`${getApiUrl()}/api/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${storedToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.user) {
+          setUser(data.user)
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error)
+    }
+  }
+
   const isAuthenticated = () => {
     return !!token && !!user
   }
@@ -280,6 +304,7 @@ export const AuthProvider = ({ children }) => {
     registerCompany,
     logout,
     updateUser,
+    refreshUser,
     isAuthenticated,
     hasRole,
     hasPermission

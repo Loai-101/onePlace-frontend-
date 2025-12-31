@@ -16,6 +16,51 @@ body {
   line-height: 1.6;
 }
 
+/* Global Modal/Popup Styles - Auto-focus and scroll */
+.modal-overlay,
+.popup-overlay,
+.validation-popup-overlay,
+.success-popup-overlay,
+.error-popup-overlay,
+.confirm-popup-overlay,
+.company-mismatch-popup-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+  padding: 20px !important;
+  z-index: 10000 !important;
+}
+
+.modal-content,
+.popup-content,
+.validation-popup,
+.success-popup,
+.error-popup,
+.confirm-popup,
+.modal-overlay > div:first-child,
+.popup-overlay > div:first-child {
+  margin: auto !important;
+  max-height: calc(100vh - 40px) !important;
+  position: relative !important;
+}
+
+/* Ensure popups are focusable for keyboard navigation */
+.modal-content:focus,
+.popup-content:focus,
+.validation-popup:focus,
+.success-popup:focus,
+.error-popup:focus,
+.confirm-popup:focus {
+  outline: 2px solid #0066cc !important;
+  outline-offset: 2px !important;
+}
+
 /* Global Layout Styles */
 .app-layout {
   display: flex;

@@ -2,19 +2,31 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getApiUrl } from '../../utils/security'
 import Loading from '../../components/Loading.jsx'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './CompanyUpdateRequests.css'
 
 function CompanyUpdateRequests() {
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('company-updates') // 'company-updates' or 'password-resets'
   const [requests, setRequests] = useState([])
+  const [passwordResetRequests, setPasswordResetRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all') // all, pending, approved, rejected
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showRejectModal, setShowRejectModal] = useState(false)
+  const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [notes, setNotes] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showDetailsModal, '.modal-content')
+  usePopupFocus(showRejectModal, '.modal-content')
+  usePopupFocus(showCompleteModal, '.modal-content')
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken')
@@ -22,8 +34,12 @@ function CompanyUpdateRequests() {
       navigate('/admin/login')
       return
     }
-    loadRequests()
-  }, [filter, navigate])
+    if (activeTab === 'company-updates') {
+      loadRequests()
+    } else {
+      loadPasswordResetRequests()
+    }
+  }, [filter, navigate, activeTab])
 
   const loadRequests = async () => {
     try {
@@ -50,6 +66,36 @@ function CompanyUpdateRequests() {
     } catch (error) {
       console.error('Error loading requests:', error)
       setErrorMessage('Error loading update requests')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadPasswordResetRequests = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('adminToken')
+      const url = filter === 'all' 
+        ? `${getApiUrl()}/api/admin/password-reset-requests`
+        : `${getApiUrl()}/api/admin/password-reset-requests?status=${filter}`
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setPasswordResetRequests(data.data || [])
+      } else {
+        setErrorMessage(data.message || 'Error loading password reset requests')
+      }
+    } catch (error) {
+      console.error('Error loading password reset requests:', error)
+      setErrorMessage('Error loading password reset requests')
     } finally {
       setLoading(false)
     }
@@ -157,11 +203,100 @@ function CompanyUpdateRequests() {
     return new Date(date).toLocaleString()
   }
 
+  const handleCompletePasswordReset = async () => {
+    if (!selectedRequest) return
+    
+    if (!newPassword || newPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Passwords do not match')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch(`${getApiUrl()}/api/admin/password-reset-requests/${selectedRequest._id}/complete`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          newPassword,
+          notes
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setSuccessMessage('Password reset completed successfully!')
+        setTimeout(() => setSuccessMessage(''), 5000)
+        loadPasswordResetRequests()
+        setShowCompleteModal(false)
+        setNewPassword('')
+        setConfirmPassword('')
+        setNotes('')
+      } else {
+        setErrorMessage(data.message || 'Error completing password reset')
+      }
+    } catch (error) {
+      console.error('Error completing password reset:', error)
+      setErrorMessage('Error completing password reset')
+    }
+  }
+
+  const handleRejectPasswordReset = async () => {
+    if (!selectedRequest) return
+    
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch(`${getApiUrl()}/api/admin/password-reset-requests/${selectedRequest._id}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          notes: rejectionReason || 'No reason provided'
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setSuccessMessage('Password reset request rejected successfully!')
+        setTimeout(() => setSuccessMessage(''), 5000)
+        loadPasswordResetRequests()
+        setShowRejectModal(false)
+        setRejectionReason('')
+      } else {
+        setErrorMessage(data.message || 'Error rejecting password reset request')
+      }
+    } catch (error) {
+      console.error('Error rejecting password reset:', error)
+      setErrorMessage('Error rejecting password reset request')
+    }
+  }
+
+  const openCompleteModal = (request) => {
+    setSelectedRequest(request)
+    setNewPassword('')
+    setConfirmPassword('')
+    setNotes('')
+    setErrorMessage('')
+    setShowCompleteModal(true)
+  }
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: { className: 'status-pending', text: 'Pending' },
       approved: { className: 'status-approved', text: 'Approved' },
-      rejected: { className: 'status-rejected', text: 'Rejected' }
+      rejected: { className: 'status-rejected', text: 'Rejected' },
+      completed: { className: 'status-approved', text: 'Completed' }
     }
     return badges[status] || badges.pending
   }
@@ -193,6 +328,47 @@ function CompanyUpdateRequests() {
         </div>
       )}
 
+      {/* Tabs */}
+      <div className="tabs-container" style={{ marginBottom: '20px', borderBottom: '2px solid #e0e0e0' }}>
+        <button
+          className={activeTab === 'company-updates' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => {
+            setActiveTab('company-updates')
+            setFilter('all')
+          }}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'company-updates' ? '3px solid #0066cc' : '3px solid transparent',
+            color: activeTab === 'company-updates' ? '#0066cc' : '#666',
+            fontWeight: activeTab === 'company-updates' ? '600' : '400',
+            marginRight: '20px'
+          }}
+        >
+          Company Updates
+        </button>
+        <button
+          className={activeTab === 'password-resets' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => {
+            setActiveTab('password-resets')
+            setFilter('all')
+          }}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'password-resets' ? '3px solid #0066cc' : '3px solid transparent',
+            color: activeTab === 'password-resets' ? '#0066cc' : '#666',
+            fontWeight: activeTab === 'password-resets' ? '600' : '400'
+          }}
+        >
+          Password Reset Requests
+        </button>
+      </div>
+
       <div className="requests-toolbar">
         <div className="filter-buttons">
           <button
@@ -207,28 +383,49 @@ function CompanyUpdateRequests() {
           >
             Pending
           </button>
-          <button
-            className={filter === 'approved' ? 'filter-btn active' : 'filter-btn'}
-            onClick={() => setFilter('approved')}
-          >
-            Approved
-          </button>
-          <button
-            className={filter === 'rejected' ? 'filter-btn active' : 'filter-btn'}
-            onClick={() => setFilter('rejected')}
-          >
-            Rejected
-          </button>
+          {activeTab === 'company-updates' ? (
+            <>
+              <button
+                className={filter === 'approved' ? 'filter-btn active' : 'filter-btn'}
+                onClick={() => setFilter('approved')}
+              >
+                Approved
+              </button>
+              <button
+                className={filter === 'rejected' ? 'filter-btn active' : 'filter-btn'}
+                onClick={() => setFilter('rejected')}
+              >
+                Rejected
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className={filter === 'completed' ? 'filter-btn active' : 'filter-btn'}
+                onClick={() => setFilter('completed')}
+              >
+                Completed
+              </button>
+              <button
+                className={filter === 'rejected' ? 'filter-btn active' : 'filter-btn'}
+                onClick={() => setFilter('rejected')}
+              >
+                Rejected
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {requests.length === 0 ? (
-        <div className="empty-state">
-          <p>No update requests found</p>
-        </div>
-      ) : (
-        <div className="requests-list">
-          {requests.map((request) => {
+      {activeTab === 'company-updates' ? (
+        <>
+          {requests.length === 0 ? (
+            <div className="empty-state">
+              <p>No update requests found</p>
+            </div>
+          ) : (
+            <div className="requests-list">
+              {requests.map((request) => {
             const statusBadge = getStatusBadge(request.status)
             return (
               <div key={request._id} className="request-card">
@@ -272,12 +469,75 @@ function CompanyUpdateRequests() {
                   )}
                 </div>
               </div>
-            )
-          })}
-        </div>
+              )
+            })}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {passwordResetRequests.length === 0 ? (
+            <div className="empty-state">
+              <p>No password reset requests found</p>
+            </div>
+          ) : (
+            <div className="requests-list">
+              {passwordResetRequests.map((request) => {
+                const statusBadge = getStatusBadge(request.status)
+                return (
+                  <div key={request._id} className="request-card">
+                    <div className="request-header">
+                      <div className="request-info">
+                        <h3>{request.user?.name || 'Unknown User'}</h3>
+                        <p className="request-meta">
+                          Email: {request.user?.email || request.email || 'N/A'}
+                        </p>
+                        <p className="request-meta">
+                          Company: {request.user?.company?.name || 'N/A'}
+                        </p>
+                        <p className="request-meta">
+                          Role: {request.user?.role || 'N/A'}
+                        </p>
+                        <p className="request-date">
+                          Requested on: {formatDate(request.createdAt)}
+                        </p>
+                      </div>
+                      <div className={`status-badge ${statusBadge.className}`}>
+                        {statusBadge.text}
+                      </div>
+                    </div>
+                    
+                    <div className="request-actions">
+                      {request.status === 'pending' && (
+                        <>
+                          <button
+                            className="btn-approve"
+                            onClick={() => openCompleteModal(request)}
+                          >
+                            Complete
+                          </button>
+                          <button
+                            className="btn-reject"
+                            onClick={() => {
+                              setSelectedRequest(request)
+                              setRejectionReason('')
+                              setShowRejectModal(true)
+                            }}
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Details Modal */}
+      {/* Details Modal for Company Updates */}
       {showDetailsModal && selectedRequest && (
         <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -382,8 +642,8 @@ function CompanyUpdateRequests() {
         </div>
       )}
 
-      {/* Reject Modal */}
-      {showRejectModal && selectedRequest && (
+      {/* Reject Modal for Company Updates */}
+      {showRejectModal && selectedRequest && activeTab === 'company-updates' && (
         <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -417,6 +677,125 @@ function CompanyUpdateRequests() {
                   className="btn-reject"
                   onClick={handleReject}
                   disabled={!rejectionReason.trim()}
+                >
+                  Reject Request
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Password Reset Modal */}
+      {showCompleteModal && selectedRequest && activeTab === 'password-resets' && (
+        <div className="modal-overlay" onClick={() => setShowCompleteModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Complete Password Reset</h2>
+              <button className="modal-close" onClick={() => setShowCompleteModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="detail-section">
+                <p><strong>User:</strong> {selectedRequest.user?.name || 'N/A'}</p>
+                <p><strong>Email:</strong> {selectedRequest.user?.email || selectedRequest.email || 'N/A'}</p>
+                <p><strong>Company:</strong> {selectedRequest.user?.company?.name || 'N/A'}</p>
+              </div>
+              <div className="form-group">
+                <label htmlFor="newPassword">New Password *</label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 6 characters)"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password *</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="notes">Notes (Optional)</label>
+                <textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows="3"
+                  placeholder="Add any notes about this password reset"
+                />
+              </div>
+              {errorMessage && (
+                <div className="error-message" style={{ marginTop: '10px' }}>
+                  {errorMessage}
+                </div>
+              )}
+              <div className="modal-actions">
+                <button
+                  className="btn-cancel"
+                  onClick={() => {
+                    setShowCompleteModal(false)
+                    setNewPassword('')
+                    setConfirmPassword('')
+                    setNotes('')
+                    setErrorMessage('')
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-approve"
+                  onClick={handleCompletePasswordReset}
+                  disabled={!newPassword || newPassword.length < 6 || newPassword !== confirmPassword}
+                >
+                  Complete Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Password Reset Modal */}
+      {showRejectModal && selectedRequest && activeTab === 'password-resets' && (
+        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Reject Password Reset Request</h2>
+              <button className="modal-close" onClick={() => setShowRejectModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to reject this password reset request for <strong>{selectedRequest.user?.name || selectedRequest.email}</strong>?</p>
+              <div className="form-group">
+                <label htmlFor="rejectionReason">Rejection Reason (Optional)</label>
+                <textarea
+                  id="rejectionReason"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  rows="4"
+                  placeholder="Enter reason for rejection"
+                />
+              </div>
+              <div className="modal-actions">
+                <button
+                  className="btn-cancel"
+                  onClick={() => {
+                    setShowRejectModal(false)
+                    setRejectionReason('')
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-reject"
+                  onClick={handleRejectPasswordReset}
                 >
                   Reject Request
                 </button>

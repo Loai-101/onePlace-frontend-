@@ -50,6 +50,9 @@ function OwnerDashboard() {
   const [topProductsData, setTopProductsData] = useState([])
   const [salesmanPerformanceData, setSalesmanPerformanceData] = useState([])
 
+  // Main category filter
+  const [selectedMainCategory, setSelectedMainCategory] = useState('all')
+  
   // Recent Orders filters
   const [selectedSalesman, setSelectedSalesman] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
@@ -71,6 +74,14 @@ function OwnerDashboard() {
     }
   }, [token])
 
+  // Reload data when main category filter changes
+  useEffect(() => {
+    if (token && orders.length > 0) {
+      loadDashboardData(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMainCategory])
+
   // Update charts when time period filter changes
   useEffect(() => {
     if (orders.length > 0) {
@@ -79,9 +90,20 @@ function OwnerDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timePeriodFilter])
 
-  // Filter orders based on salesman, status, and date filters
+  // Filter orders based on salesman, status, date, and main category filters
   useEffect(() => {
     let filtered = [...orders]
+
+    // Filter by main category first
+    if (selectedMainCategory && selectedMainCategory !== 'all') {
+      filtered = filtered.filter(order => {
+        // Check if any item in the order has the selected main category
+        return order.items?.some(item => {
+          const itemMainCategory = item.mainCategory || item.product?.mainCategory
+          return itemMainCategory === selectedMainCategory
+        })
+      })
+    }
 
     // Filter by salesman
     if (selectedSalesman) {
@@ -138,7 +160,7 @@ function OwnerDashboard() {
     }
 
     setFilteredOrders(filtered)
-  }, [orders, selectedSalesman, selectedStatus, selectedAccount, dateFilterType, selectedDate, dateFrom, dateTo])
+  }, [orders, selectedMainCategory, selectedSalesman, selectedStatus, selectedAccount, dateFilterType, selectedDate, dateFrom, dateTo])
 
   // Get unique statuses from orders
   const uniqueStatuses = useMemo(() => {
@@ -169,16 +191,16 @@ function OwnerDashboard() {
         fetch(`${apiUrl}/api/orders?limit=200&sort=createdAt&order=desc`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch(`${apiUrl}/api/products?limit=500`, {
+        fetch(`${apiUrl}/api/products?limit=500${selectedMainCategory && selectedMainCategory !== 'all' ? `&mainCategory=${selectedMainCategory}` : ''}`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
         fetch(`${apiUrl}/api/users?limit=100`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch(`${apiUrl}/api/categories`, {
+        fetch(`${apiUrl}/api/categories${selectedMainCategory && selectedMainCategory !== 'all' ? `?mainCategory=${selectedMainCategory}` : ''}`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch(`${apiUrl}/api/brands`, {
+        fetch(`${apiUrl}/api/brands${selectedMainCategory && selectedMainCategory !== 'all' ? `?mainCategory=${selectedMainCategory}` : ''}`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
         fetch(`${apiUrl}/api/orders/statistics`, {
@@ -229,7 +251,13 @@ function OwnerDashboard() {
       }
 
       if (productsData.success) {
-        const productsList = productsData.data || []
+        let productsList = productsData.data || []
+        
+        // Additional client-side filtering by main category if needed
+        if (selectedMainCategory && selectedMainCategory !== 'all') {
+          productsList = productsList.filter(p => p.mainCategory === selectedMainCategory)
+        }
+        
         setProducts(productsList)
         // Find low stock products and sort by most critical first
         const lowStock = productsList
@@ -323,10 +351,22 @@ function OwnerDashboard() {
       startDate.setMonth(startDate.getMonth() - periodMonths)
     }
 
-    const filteredOrders = orders.filter(order => {
+    let filteredOrders = orders.filter(order => {
       const orderDate = new Date(order.createdAt)
       return orderDate >= startDate
     })
+
+    // Filter orders by main category if selected
+    if (selectedMainCategory && selectedMainCategory !== 'all') {
+      filteredOrders = filteredOrders.filter(order => {
+        // Check if any item in the order has the selected main category
+        return order.items?.some(item => {
+          // Try to get main category from item or product
+          const itemMainCategory = item.mainCategory || item.product?.mainCategory
+          return itemMainCategory === selectedMainCategory
+        })
+      })
+    }
 
     filteredOrders.forEach(order => {
       const orderDate = new Date(order.createdAt)
@@ -400,6 +440,14 @@ function OwnerDashboard() {
     const categoryMap = {}
     filteredOrders.forEach(order => {
       order.items?.forEach(item => {
+        // Only include items that match the selected main category
+        if (selectedMainCategory && selectedMainCategory !== 'all') {
+          const itemMainCategory = item.mainCategory || item.product?.mainCategory
+          if (itemMainCategory !== selectedMainCategory) {
+            return // Skip this item
+          }
+        }
+        
         const category = item.category || 'Unknown'
         if (!categoryMap[category]) {
           categoryMap[category] = { name: category, value: 0, amount: 0 }
@@ -418,6 +466,14 @@ function OwnerDashboard() {
     const productMap = {}
     filteredOrders.forEach(order => {
       order.items?.forEach(item => {
+        // Only include items that match the selected main category
+        if (selectedMainCategory && selectedMainCategory !== 'all') {
+          const itemMainCategory = item.mainCategory || item.product?.mainCategory
+          if (itemMainCategory !== selectedMainCategory) {
+            return // Skip this item
+          }
+        }
+        
         const productName = item.productName || 'Unknown'
         if (!productMap[productName]) {
           productMap[productName] = { name: productName, value: 0, amount: 0 }
@@ -448,17 +504,51 @@ function OwnerDashboard() {
       const salesmanId = salesman._id?.toString() || salesman.id?.toString()
       
       // Calculate orders and revenue for this salesman
-      const salesmanOrders = orders.filter(order => {
+      let salesmanOrders = orders.filter(order => {
         const orderCreatorId = order.createdBy?._id?.toString() || 
                               order.createdBy?.toString() || 
                               order.createdBy
         return orderCreatorId === salesmanId
       })
+
+      // Filter by main category if selected
+      if (selectedMainCategory && selectedMainCategory !== 'all') {
+        salesmanOrders = salesmanOrders.filter(order => {
+          // Check if any item in the order has the selected main category
+          return order.items?.some(item => {
+            const itemMainCategory = item.mainCategory || item.product?.mainCategory
+            return itemMainCategory === selectedMainCategory
+          })
+        })
+      }
       
-      const totalOrders = salesmanOrders.length
-      const totalRevenue = salesmanOrders.reduce((sum, order) => {
-        return sum + (order.pricing?.total || 0)
-      }, 0)
+      // Calculate revenue only from items matching main category
+      let totalOrders = 0
+      let totalRevenue = 0
+      
+      if (selectedMainCategory && selectedMainCategory !== 'all') {
+        // Count orders that have at least one item with the selected main category
+        totalOrders = salesmanOrders.length
+        
+        // Calculate revenue only from items matching the main category
+        salesmanOrders.forEach(order => {
+          const matchingItems = order.items?.filter(item => {
+            const itemMainCategory = item.mainCategory || item.product?.mainCategory
+            return itemMainCategory === selectedMainCategory
+          }) || []
+          
+          const matchingRevenue = matchingItems.reduce((sum, item) => {
+            return sum + (item.totalPrice || 0)
+          }, 0)
+          
+          totalRevenue += matchingRevenue
+        })
+      } else {
+        totalOrders = salesmanOrders.length
+        totalRevenue = salesmanOrders.reduce((sum, order) => {
+          return sum + (order.pricing?.total || 0)
+        }, 0)
+      }
       
       // Calculate completed visits for this salesman
       const salesmanVisits = calendarEvents.filter(event => {
@@ -519,10 +609,37 @@ function OwnerDashboard() {
     })
   }
 
-  // Calculate metrics
-  const totalRevenue = stats?.overview?.totalRevenue || 0
-  const totalOrders = stats?.overview?.totalOrders || 0
-  const averageOrderValue = stats?.overview?.averageOrderValue || 0
+  // Calculate metrics - respect main category filter
+  let totalRevenue = stats?.overview?.totalRevenue || 0
+  let totalOrders = stats?.overview?.totalOrders || 0
+  
+  // If main category is selected, calculate from filtered orders
+  if (selectedMainCategory && selectedMainCategory !== 'all') {
+    // Count orders that have at least one item with the selected main category
+    totalOrders = orders.filter(order => {
+      return order.items?.some(item => {
+        const itemMainCategory = item.mainCategory || item.product?.mainCategory
+        return itemMainCategory === selectedMainCategory
+      })
+    }).length
+    
+    // Calculate revenue only from items matching the main category
+    totalRevenue = 0
+    orders.forEach(order => {
+      const matchingItems = order.items?.filter(item => {
+        const itemMainCategory = item.mainCategory || item.product?.mainCategory
+        return itemMainCategory === selectedMainCategory
+      }) || []
+      
+      const matchingRevenue = matchingItems.reduce((sum, item) => {
+        return sum + (item.totalPrice || 0)
+      }, 0)
+      
+      totalRevenue += matchingRevenue
+    })
+  }
+  
+  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
   const totalProducts = products.length
   const totalUsers = users.length
   const totalCategories = categories.length
@@ -532,11 +649,39 @@ function OwnerDashboard() {
   // Calculate this month's metrics
   const currentMonth = new Date().getMonth()
   const currentYear = new Date().getFullYear()
-  const thisMonthOrders = orders.filter(order => {
+  let thisMonthOrders = orders.filter(order => {
     const orderDate = new Date(order.createdAt)
     return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear
   })
-  const thisMonthRevenue = thisMonthOrders.reduce((sum, order) => sum + (order.pricing?.total || 0), 0)
+  
+  // Filter by main category if selected
+  if (selectedMainCategory && selectedMainCategory !== 'all') {
+    thisMonthOrders = thisMonthOrders.filter(order => {
+      return order.items?.some(item => {
+        const itemMainCategory = item.mainCategory || item.product?.mainCategory
+        return itemMainCategory === selectedMainCategory
+      })
+    })
+  }
+  
+  // Calculate revenue only from matching items
+  let thisMonthRevenue = 0
+  if (selectedMainCategory && selectedMainCategory !== 'all') {
+    thisMonthOrders.forEach(order => {
+      const matchingItems = order.items?.filter(item => {
+        const itemMainCategory = item.mainCategory || item.product?.mainCategory
+        return itemMainCategory === selectedMainCategory
+      }) || []
+      
+      const matchingRevenue = matchingItems.reduce((sum, item) => {
+        return sum + (item.totalPrice || 0)
+      }, 0)
+      
+      thisMonthRevenue += matchingRevenue
+    })
+  } else {
+    thisMonthRevenue = thisMonthOrders.reduce((sum, order) => sum + (order.pricing?.total || 0), 0)
+  }
 
   if (loading && orders.length === 0) {
     return (
@@ -550,6 +695,37 @@ function OwnerDashboard() {
     <div className="owner-dashboard">
       <div className="dashboard-header">
         <h1 className="dashboard-title">Owner Dashboard</h1>
+        <div className="main-category-filter" style={{ marginTop: '12px' }}>
+          <label htmlFor="main-category-filter" style={{ 
+            display: 'inline-block', 
+            marginRight: '8px', 
+            fontWeight: '600',
+            fontSize: '14px',
+            color: '#1a1a1a'
+          }}>
+            Main Category:
+          </label>
+          <select
+            id="main-category-filter"
+            value={selectedMainCategory}
+            onChange={(e) => setSelectedMainCategory(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              fontSize: '14px',
+              minWidth: '200px',
+              background: 'white',
+              color: '#1a1a1a'
+            }}
+          >
+            <option value="all">All Categories</option>
+            <option value="medical">Medical</option>
+            <option value="it-solutions">IT Solutions</option>
+            <option value="pharmacy">Pharmacy</option>
+            <option value="salon">Salon</option>
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -983,18 +1159,18 @@ function OwnerDashboard() {
             {/* Filters */}
             <div className="recent-orders-filters" style={{ 
               display: 'flex', 
-              gap: '1rem', 
-              marginBottom: '1.5rem', 
+              gap: '12px', 
+              marginBottom: '20px', 
               flexWrap: 'wrap',
               alignItems: 'flex-end'
             }}>
               <div className="form-group" style={{ minWidth: '200px' }}>
                 <label htmlFor="salesman-filter" style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '8px', 
                   fontWeight: '600',
-                  fontSize: '0.875rem',
-                  color: '#333'
+                  fontSize: '14px',
+                  color: '#1a1a1a'
                 }}>
                   Filter by Salesman
                 </label>
@@ -1004,10 +1180,12 @@ function OwnerDashboard() {
                   onChange={(e) => setSelectedSalesman(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '0.5rem',
+                    padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    background: 'white',
+                    color: '#1a1a1a'
                   }}
                 >
                   <option value="">All Salesmen</option>
@@ -1025,10 +1203,10 @@ function OwnerDashboard() {
               <div className="form-group" style={{ minWidth: '200px' }}>
                 <label htmlFor="status-filter" style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '8px', 
                   fontWeight: '600',
-                  fontSize: '0.875rem',
-                  color: '#333'
+                  fontSize: '14px',
+                  color: '#1a1a1a'
                 }}>
                   Filter by Status
                 </label>
@@ -1038,10 +1216,12 @@ function OwnerDashboard() {
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '0.5rem',
+                    padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    background: 'white',
+                    color: '#1a1a1a'
                   }}
                 >
                   <option value="">All Statuses</option>
@@ -1056,10 +1236,10 @@ function OwnerDashboard() {
               <div className="form-group" style={{ minWidth: '200px' }}>
                 <label htmlFor="account-filter" style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '8px', 
                   fontWeight: '600',
-                  fontSize: '0.875rem',
-                  color: '#333'
+                  fontSize: '14px',
+                  color: '#1a1a1a'
                 }}>
                   Filter by Account
                 </label>
@@ -1069,10 +1249,12 @@ function OwnerDashboard() {
                   onChange={(e) => setSelectedAccount(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '0.5rem',
+                    padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    background: 'white',
+                    color: '#1a1a1a'
                   }}
                 >
                   <option value="">All Accounts</option>
@@ -1090,10 +1272,10 @@ function OwnerDashboard() {
               <div className="form-group" style={{ minWidth: '200px' }}>
                 <label htmlFor="date-filter-type" style={{ 
                   display: 'block', 
-                  marginBottom: '0.5rem', 
+                  marginBottom: '8px', 
                   fontWeight: '600',
-                  fontSize: '0.875rem',
-                  color: '#333'
+                  fontSize: '14px',
+                  color: '#1a1a1a'
                 }}>
                   Filter by Date
                 </label>
@@ -1108,10 +1290,12 @@ function OwnerDashboard() {
                   }}
                   style={{
                     width: '100%',
-                    padding: '0.5rem',
+                    padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    background: 'white',
+                    color: '#1a1a1a'
                   }}
                 >
                   <option value="">No Date Filter</option>
@@ -1124,10 +1308,10 @@ function OwnerDashboard() {
                 <div className="form-group" style={{ minWidth: '180px' }}>
                   <label htmlFor="selected-date" style={{ 
                     display: 'block', 
-                    marginBottom: '0.5rem', 
+                    marginBottom: '8px', 
                     fontWeight: '600',
-                    fontSize: '0.875rem',
-                    color: '#333'
+                    fontSize: '14px',
+                    color: '#1a1a1a'
                   }}>
                     Select Date
                   </label>
@@ -1152,10 +1336,10 @@ function OwnerDashboard() {
                   <div className="form-group" style={{ minWidth: '180px' }}>
                     <label htmlFor="date-from" style={{ 
                       display: 'block', 
-                      marginBottom: '0.5rem', 
+                      marginBottom: '8px', 
                       fontWeight: '600',
-                      fontSize: '0.875rem',
-                      color: '#333'
+                      fontSize: '14px',
+                      color: '#1a1a1a'
                     }}>
                       From Date
                     </label>
@@ -1176,10 +1360,10 @@ function OwnerDashboard() {
                   <div className="form-group" style={{ minWidth: '180px' }}>
                     <label htmlFor="date-to" style={{ 
                       display: 'block', 
-                      marginBottom: '0.5rem', 
+                      marginBottom: '8px', 
                       fontWeight: '600',
-                      fontSize: '0.875rem',
-                      color: '#333'
+                      fontSize: '14px',
+                      color: '#1a1a1a'
                     }}>
                       To Date
                     </label>
@@ -1217,7 +1401,7 @@ function OwnerDashboard() {
                 <tbody>
                   {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                      <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: '#666', fontSize: '14px' }}>
                         No orders found matching the selected filters
                       </td>
                     </tr>

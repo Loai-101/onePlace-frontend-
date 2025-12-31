@@ -8,6 +8,7 @@ import EmptyState from '../../components/EmptyState.jsx'
 import Loading from '../../components/Loading.jsx'
 import SuccessAnimation from '../../components/SuccessAnimation.jsx'
 import { getApiUrl } from '../../utils/security'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Calendar.css'
 
 function Calendar() {
@@ -25,11 +26,19 @@ function Calendar() {
   const [selectedDayDate, setSelectedDayDate] = useState(null)
   const [accounts, setAccounts] = useState([])
   
+  // Auto-focus popups when they open
+  usePopupFocus(showEventModal, '.modal-content')
+  usePopupFocus(showEventDetailsModal, '.modal-content')
+  usePopupFocus(showReportModal, '.modal-content')
+  usePopupFocus(showAllEventsModal, '.modal-content')
+  
   // Report form state
   const [reportTitle, setReportTitle] = useState('')
   const [reportContent, setReportContent] = useState('')
-  const [reportEmail, setReportEmail] = useState('')
-  const [sendingReport, setSendingReport] = useState(false)
+  const [reportType, setReportType] = useState('') // 'upload' or 'write'
+  const [reportFile, setReportFile] = useState(null)
+  const [reportFileName, setReportFileName] = useState('')
+  const [uploadingReport, setUploadingReport] = useState(false)
   const [showReportSuccess, setShowReportSuccess] = useState(false)
   
   // Form state
@@ -325,48 +334,47 @@ function Calendar() {
     }, 3000) // Auto-hide after 3 seconds
   }
 
-  // Handle send report
-  const handleSendReport = async () => {
-    if (!reportTitle.trim() || !reportContent.trim()) {
-      showNotification('Please fill in both title and content', 'error')
+  // Handle file selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setReportFile(file)
+      setReportFileName(file.name)
+    }
+  }
+
+  // Handle upload report file
+  const handleUploadReport = async () => {
+    if (!reportTitle.trim()) {
+      showNotification('Please enter a report title', 'error')
       return
     }
 
-    // Validate email if provided
-    if (reportEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reportEmail.trim())) {
-      showNotification('Please enter a valid email address', 'error')
+    if (!reportFile) {
+      showNotification('Please select a file to upload', 'error')
       return
     }
 
     try {
-      setSendingReport(true)
+      setUploadingReport(true)
       const apiUrl = getApiUrl()
-      const response = await fetch(`${apiUrl}/api/calendar/report`, {
+      const formData = new FormData()
+      formData.append('file', reportFile)
+      formData.append('title', reportTitle.trim())
+      formData.append('description', reportContent.trim() || '')
+
+      const response = await fetch(`${apiUrl}/api/reports/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          title: reportTitle,
-          content: reportContent,
-          recipientEmail: reportEmail.trim() || undefined // Send custom email if provided
-        })
+        body: formData
       })
       
       const data = await response.json()
       
       if (!response.ok) {
-        // Handle HTTP error status codes
-        if (response.status === 400) {
-          showNotification(data.message || 'Invalid report data. Please check your input.', 'error')
-        } else if (response.status === 404) {
-          showNotification(data.message || 'Company not found. Please contact support.', 'error')
-        } else if (response.status === 500) {
-          showNotification(data.message || 'Server error. Please try again later.', 'error')
-        } else {
-          showNotification(data.message || 'Error sending report. Please try again.', 'error')
-        }
+        showNotification(data.message || 'Error uploading report', 'error')
         return
       }
       
@@ -375,20 +383,70 @@ function Calendar() {
         setShowReportSuccess(true)
         setReportTitle('')
         setReportContent('')
-        setReportEmail('')
-        if (data.warning) {
-          showNotification(data.warning, 'error')
-        } else {
-          showNotification('Report sent successfully!', 'success')
-        }
+        setReportFile(null)
+        setReportFileName('')
+        setReportType('')
+        showNotification('Report uploaded successfully!', 'success')
       } else {
-        showNotification(data.message || 'Error sending report', 'error')
+        showNotification(data.message || 'Error uploading report', 'error')
       }
     } catch (error) {
-      console.error('Error sending report:', error)
-      showNotification('Network error. Please check your connection and try again.', 'error')
+      console.error('Error uploading report:', error)
+      showNotification('Error uploading report. Please try again.', 'error')
     } finally {
-      setSendingReport(false)
+      setUploadingReport(false)
+    }
+  }
+
+  // Handle save report as PDF
+  const handleSaveAsPdf = async () => {
+    if (!reportTitle.trim()) {
+      showNotification('Please enter a report title', 'error')
+      return
+    }
+
+    if (!reportContent.trim()) {
+      showNotification('Please enter report description', 'error')
+      return
+    }
+
+    try {
+      setUploadingReport(true)
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/reports/pdf`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: reportTitle.trim(),
+          description: reportContent.trim()
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        showNotification(data.message || 'Error saving report', 'error')
+        return
+      }
+      
+      if (data.success) {
+        setShowReportModal(false)
+        setShowReportSuccess(true)
+        setReportTitle('')
+        setReportContent('')
+        setReportType('')
+        showNotification('Report saved as PDF successfully!', 'success')
+      } else {
+        showNotification(data.message || 'Error saving report', 'error')
+      }
+    } catch (error) {
+      console.error('Error saving report:', error)
+      showNotification('Error saving report. Please try again.', 'error')
+    } finally {
+      setUploadingReport(false)
     }
   }
 
@@ -442,6 +500,20 @@ function Calendar() {
     }
   }
 
+  // Get display text for event tag
+  const getEventTagText = (event) => {
+    if (event.type === 'todo') {
+      // For todo: Event Type + Title
+      return `TODO: ${event.title}`
+    } else if (event.type === 'visit') {
+      // For visit: Event Type + Account
+      const accountName = event.account?.name || event.accountName || 'Unknown Account'
+      return `VISIT: ${accountName}`
+    }
+    // Fallback
+    return event.title
+  }
+
   return (
     <div className="calendar-page">
       {/* Notification Popup */}
@@ -481,7 +553,9 @@ function Calendar() {
             onClick={() => {
               setReportTitle('')
               setReportContent('')
-              setReportEmail('')
+              setReportFile(null)
+              setReportFileName('')
+              setReportType('')
               setShowReportModal(true)
             }}
             style={{ backgroundColor: '#28a745' }}
@@ -529,9 +603,9 @@ function Calendar() {
                             e.stopPropagation()
                             handleEventClick(event)
                           }}
-                          title={event.title}
+                          title={getEventTagText(event)}
                         >
-                          {event.title}
+                          {getEventTagText(event)}
                         </div>
                       ))}
                       {dayEvents.length > 3 && (
@@ -873,19 +947,15 @@ function Calendar() {
                       style={{ backgroundColor: getEventColor(event, index, selectedDayEvents) }}
                     ></div>
                     <div className="event-item-content">
-                      <div className="event-item-title">{event.title}</div>
+                      <div className="event-item-title">{getEventTagText(event)}</div>
                       <div className="event-item-details">
-                        {event.type === 'visit' && (
-                          <span className="event-item-type">Visit</span>
-                        )}
-                        {event.type === 'todo' && (
-                          <span className="event-item-type">Todo</span>
-                        )}
                         {event.startTime && (
                           <span className="event-item-time">{event.startTime}</span>
                         )}
-                        {event.accountName && (
-                          <span className="event-item-account">{event.accountName}</span>
+                        {event.type === 'visit' && (
+                          <span className="event-item-account">
+                            {event.account?.name || event.accountName || 'Unknown Account'}
+                          </span>
                         )}
                       </div>
                       {event.description && (
@@ -912,100 +982,177 @@ function Calendar() {
       {/* Success Animation for Report */}
       {showReportSuccess && (
         <SuccessAnimation
-          message="Report sent successfully!"
+          message="Report saved successfully!"
           duration={2500}
           onComplete={() => {
             setShowReportSuccess(false)
-            showNotification('Report sent successfully to company email!', 'success')
           }}
         />
       )}
 
-      {/* Write Report Modal */}
+      {/* Report Modal */}
       {showReportModal && (
         <div className="modal-overlay" onClick={() => {
-          if (!sendingReport) {
+          if (!uploadingReport) {
             setShowReportModal(false)
             setReportTitle('')
             setReportContent('')
-            setReportEmail('')
+            setReportFile(null)
+            setReportFileName('')
+            setReportType('')
           }
         }}>
           <div className="modal-content event-modal" onClick={(e) => e.stopPropagation()}>
-            {sendingReport ? (
+            {uploadingReport ? (
               <div style={{ padding: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', minHeight: '300px', justifyContent: 'center' }}>
-                <Loading size="medium" message="Sending report..." />
+                <Loading size="medium" message="Processing report..." />
               </div>
             ) : (
               <>
                 <div className="modal-header">
-                  <h2>Write Report</h2>
+                  <h2>Create Report</h2>
                   <button className="modal-close" onClick={() => {
                     setShowReportModal(false)
                     setReportTitle('')
                     setReportContent('')
-                    setReportEmail('')
+                    setReportFile(null)
+                    setReportFileName('')
+                    setReportType('')
                   }}>×</button>
                 </div>
                 <div className="modal-body">
-                  <div className="form-group">
-                    <label>Report Title *</label>
-                    <input
-                      type="text"
-                      value={reportTitle}
-                      onChange={(e) => setReportTitle(e.target.value)}
-                      placeholder="Enter report title"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Report Content *</label>
-                    <textarea
-                      value={reportContent}
-                      onChange={(e) => setReportContent(e.target.value)}
-                      rows="10"
-                      placeholder="Write your report here..."
-                      style={{ minHeight: '200px' }}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Recipient Email Address</label>
-                    <input
-                      type="email"
-                      value={reportEmail}
-                      onChange={(e) => setReportEmail(e.target.value)}
-                      placeholder="Enter email address (optional - defaults to company email)"
-                      style={{ width: '100%' }}
-                    />
-                    <small style={{ color: '#6c757d', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>
-                      Leave empty to send to company email. Enter a custom email to send to a specific recipient.
-                    </small>
-                  </div>
-
-                  <div className="form-group" style={{ 
-                    background: '#e3f2fd', 
-                    padding: '1rem', 
-                    borderRadius: '4px',
-                    fontSize: '0.9rem',
-                    color: '#1976d2'
-                  }}>
-                    <strong>Note:</strong> This report will be sent {reportEmail.trim() ? `to ${reportEmail.trim()}` : "to your company's email address"}. The email will appear to be from your email address ({user?.email || 'your email'}).
-                  </div>
+                  {!reportType ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setReportType('upload')}
+                        style={{
+                          padding: '1.5rem',
+                          border: '2px solid #007bff',
+                          borderRadius: '8px',
+                          background: '#f8f9fa',
+                          cursor: 'pointer',
+                          fontSize: '1rem',
+                          fontWeight: '500',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div style={{ marginBottom: '0.5rem', fontWeight: '600' }}>Upload File</div>
+                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Upload an existing report file (PDF, Word, etc.)</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReportType('write')}
+                        style={{
+                          padding: '1.5rem',
+                          border: '2px solid #007bff',
+                          borderRadius: '8px',
+                          background: '#f8f9fa',
+                          cursor: 'pointer',
+                          fontSize: '1rem',
+                          fontWeight: '500',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div style={{ marginBottom: '0.5rem', fontWeight: '600' }}>Write Report</div>
+                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Write a report and save it as PDF</div>
+                      </button>
+                    </div>
+                  ) : reportType === 'upload' ? (
+                    <>
+                      <div className="form-group">
+                        <label>Report Title *</label>
+                        <input
+                          type="text"
+                          value={reportTitle}
+                          onChange={(e) => setReportTitle(e.target.value)}
+                          placeholder="Enter report title"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Description (Optional)</label>
+                        <textarea
+                          value={reportContent}
+                          onChange={(e) => setReportContent(e.target.value)}
+                          rows="4"
+                          placeholder="Add a description..."
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Upload File *</label>
+                        <input
+                          type="file"
+                          onChange={handleFileChange}
+                          accept=".pdf,.doc,.docx,.txt,.rtf"
+                          style={{ width: '100%', padding: '0.5rem' }}
+                        />
+                        {reportFileName && (
+                          <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#e3f2fd', borderRadius: '4px', fontSize: '0.9rem' }}>
+                            Selected: {reportFileName}
+                          </div>
+                        )}
+                        <small style={{ color: '#6c757d', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>
+                          Supported formats: PDF, Word (.doc, .docx), Text (.txt), RTF (.rtf). Max size: 10MB
+                        </small>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="form-group">
+                        <label>Report Title *</label>
+                        <input
+                          type="text"
+                          value={reportTitle}
+                          onChange={(e) => setReportTitle(e.target.value)}
+                          placeholder="Enter report title"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Description *</label>
+                        <textarea
+                          value={reportContent}
+                          onChange={(e) => setReportContent(e.target.value)}
+                          rows="10"
+                          placeholder="Write your report here..."
+                          style={{ minHeight: '200px' }}
+                        />
+                        <small style={{ color: '#6c757d', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>
+                          Salesman name, date, and time will be automatically added to the PDF
+                        </small>
+                      </div>
+                    </>
+                  )}
                 </div>
-            <div className="modal-footer">
-              <SecondaryButton onClick={() => {
-                setShowReportModal(false)
-                setReportTitle('')
-                setReportContent('')
-                setReportEmail('')
-              }}>
-                Cancel
-              </SecondaryButton>
-              <PrimaryButton onClick={handleSendReport} disabled={sendingReport}>
-                Send Report
-              </PrimaryButton>
-            </div>
+                <div className="modal-footer">
+                  <SecondaryButton onClick={() => {
+                    if (reportType) {
+                      setReportType('')
+                      setReportTitle('')
+                      setReportContent('')
+                      setReportFile(null)
+                      setReportFileName('')
+                    } else {
+                      setShowReportModal(false)
+                      setReportTitle('')
+                      setReportContent('')
+                      setReportFile(null)
+                      setReportFileName('')
+                      setReportType('')
+                    }
+                  }}>
+                    {reportType ? 'Back' : 'Cancel'}
+                  </SecondaryButton>
+                  {reportType === 'upload' && (
+                    <PrimaryButton onClick={handleUploadReport} disabled={uploadingReport || !reportTitle.trim() || !reportFile}>
+                      Upload Report
+                    </PrimaryButton>
+                  )}
+                  {reportType === 'write' && (
+                    <PrimaryButton onClick={handleSaveAsPdf} disabled={uploadingReport || !reportTitle.trim() || !reportContent.trim()}>
+                      Save as PDF
+                    </PrimaryButton>
+                  )}
+                </div>
               </>
             )}
           </div>

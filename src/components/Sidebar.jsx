@@ -62,6 +62,16 @@ function Sidebar({ isOpen, setIsOpen }) {
                   Calendar
                 </Link>
               </li>
+              <li>
+                <a 
+                  href="https://mws.pmi-me.net/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="external-link"
+                >
+                  DA
+                </a>
+              </li>
         </ul>
       </div>
         )}
@@ -157,6 +167,24 @@ function Sidebar({ isOpen, setIsOpen }) {
             >
               Calendar
             </Link>
+          </li>
+          <li>
+            <Link 
+              to="/dashboard/owner/reports" 
+              className={location.pathname === '/dashboard/owner/reports' ? 'active' : ''}
+            >
+              Reports
+            </Link>
+          </li>
+          <li>
+            <a 
+              href="https://mws.pmi-me.net/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="external-link"
+            >
+              DA
+            </a>
           </li>
           <li>
             <Link 

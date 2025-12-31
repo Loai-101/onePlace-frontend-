@@ -6,6 +6,7 @@ import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import Loading from '../../components/Loading.jsx'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Brands.css'
 
 function Brands() {
@@ -14,6 +15,7 @@ function Brands() {
   const [filteredBrands, setFilteredBrands] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedMainCategory, setSelectedMainCategory] = useState('all')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedBrand, setSelectedBrand] = useState(null)
@@ -28,13 +30,28 @@ function Brands() {
     name: '',
     description: '',
     logo: '',
-    brandColor: '#667eea'
+    brandColor: '#667eea',
+    mainCategory: ''
   })
   const [logoFile, setLogoFile] = useState(null)
   const [logoPreview, setLogoPreview] = useState('')
   const [uploading, setUploading] = useState(false)
   const [showInactive, setShowInactive] = useState(true)
   const [isComingSoon, setIsComingSoon] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showImportModal, '.modal-content')
+  usePopupFocus(showDownloadModal, '.modal-content')
+  usePopupFocus(showSuccessPopup)
+  usePopupFocus(showErrorPopup)
+  usePopupFocus(showConfirmPopup)
+  
+  const [excelFile, setExcelFile] = useState(null)
+  const [importing, setImporting] = useState(false)
+  const [importResults, setImportResults] = useState(null)
+  const [importMainCategory, setImportMainCategory] = useState('')
 
   useEffect(() => {
     if (token) {
@@ -44,7 +61,7 @@ function Brands() {
 
   useEffect(() => {
     filterBrands()
-  }, [brands, searchTerm, showInactive])
+  }, [brands, searchTerm, selectedMainCategory, showInactive])
 
   const loadBrands = async () => {
     try {
@@ -71,6 +88,13 @@ function Brands() {
 
   const filterBrands = () => {
     let filtered = brands
+
+    // Filter by main category first
+    if (selectedMainCategory !== 'all') {
+      filtered = filtered.filter(brand => 
+        brand.mainCategory === selectedMainCategory
+      )
+    }
 
     // Filter by active/inactive status
     if (!showInactive) {
@@ -113,6 +137,7 @@ function Brands() {
             alt: formData.name
           },
           brandColor: formData.brandColor,
+          mainCategory: formData.mainCategory || undefined,
           isActive: !isComingSoon
         })
       })
@@ -177,7 +202,8 @@ function Brands() {
             url: logoUrl || undefined,
             alt: formData.name
           },
-          brandColor: formData.brandColor
+          brandColor: formData.brandColor,
+          mainCategory: formData.mainCategory || undefined
         })
       })
 
@@ -197,6 +223,193 @@ function Brands() {
       console.error('Error updating brand:', error)
       setErrorMessage('Error updating brand: ' + (error.message || 'Unknown error'))
       setShowErrorPopup(true)
+    }
+  }
+
+  const handleExcelFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      // Validate file type
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel', // .xls
+        'text/csv' // .csv
+      ]
+      const validExtensions = ['.xlsx', '.xls', '.csv']
+      
+      const isValidType = validTypes.includes(file.type) || 
+        validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+      
+      if (!isValidType) {
+        setErrorMessage('Please select an Excel file (.xlsx, .xls) or CSV file')
+        setShowErrorPopup(true)
+        return
+      }
+      
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        setErrorMessage('File size must be less than 10MB')
+        setShowErrorPopup(true)
+        return
+      }
+
+      setExcelFile(file)
+    }
+  }
+
+  const handleDownloadTemplate = (mainCategory = null) => {
+    // Use provided main category, or selected importMainCategory, or 'medical' as default
+    const defaultMainCategory = mainCategory || importMainCategory || 'medical'
+    
+    // Create template data
+    const templateData = [
+      {
+        'Brand Name': 'Example Brand',
+        'Main Category': defaultMainCategory,
+        'Description': 'High-quality brand description',
+        'Brand Color': '#667eea',
+        'Is Active': 'true',
+        'Logo URL': 'https://example.com/logo.jpg'
+      },
+      {
+        'Brand Name': 'Another Brand',
+        'Main Category': defaultMainCategory,
+        'Description': 'Another brand description',
+        'Brand Color': '#764ba2',
+        'Is Active': 'true',
+        'Logo URL': ''
+      }
+    ]
+
+    // Convert to CSV format
+    const headers = ['Brand Name', 'Main Category', 'Description', 'Brand Color', 'Is Active', 'Logo URL']
+    const csvContent = [
+      headers.join(','),
+      ...templateData.map(row => 
+        headers.map(header => {
+          const value = row[header] || ''
+          return `"${value.toString().replace(/"/g, '""')}"`
+        }).join(',')
+      )
+    ].join('\n')
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    const categoryName = defaultMainCategory !== 'medical' ? `_${defaultMainCategory}` : ''
+    link.setAttribute('download', `brands_template${categoryName}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleDownloadBrands = (mainCategory = 'all') => {
+    // Filter brands by main category if specified
+    let brandsToDownload = brands
+    if (mainCategory !== 'all') {
+      brandsToDownload = brands.filter(b => b.mainCategory === mainCategory)
+    }
+
+    if (brandsToDownload.length === 0) {
+      setErrorMessage(`No brands available${mainCategory !== 'all' ? ` for ${mainCategory}` : ''}`)
+      setShowErrorPopup(true)
+      setShowDownloadModal(false)
+      return
+    }
+
+    // Convert brands to CSV format
+    const headers = ['Brand Name', 'Main Category', 'Description', 'Brand Color', 'Is Active', 'Logo URL']
+    
+    const csvData = brandsToDownload.map(brand => {
+      // Get logo URL
+      const logoUrl = brand.logo?.url || ''
+      
+      return {
+        'Brand Name': brand.name || '',
+        'Main Category': brand.mainCategory || '',
+        'Description': brand.description || '',
+        'Brand Color': brand.brandColor || '#667eea',
+        'Is Active': brand.isActive ? 'true' : 'false',
+        'Logo URL': logoUrl
+      }
+    })
+
+    // Convert to CSV format
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => 
+        headers.map(header => {
+          const value = row[header] || ''
+          return `"${value.toString().replace(/"/g, '""')}"`
+        }).join(',')
+      )
+    ].join('\n')
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    const timestamp = new Date().toISOString().split('T')[0]
+    const categorySuffix = mainCategory !== 'all' ? `_${mainCategory}` : ''
+    link.setAttribute('download', `brands_export${categorySuffix}_${timestamp}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    setSuccessMessage(`Successfully downloaded ${brandsToDownload.length} brand${brandsToDownload.length !== 1 ? 's' : ''}${mainCategory !== 'all' ? ` (${mainCategory})` : ''}`)
+    setShowSuccessPopup(true)
+    setShowDownloadModal(false)
+    
+    // Clean up the blob URL
+    URL.revokeObjectURL(url)
+  }
+
+  const handleBulkImport = async () => {
+    if (!excelFile) {
+      setErrorMessage('Please select an Excel file')
+      setShowErrorPopup(true)
+      return
+    }
+
+    try {
+      setImporting(true)
+      const formData = new FormData()
+      formData.append('excelFile', excelFile)
+      if (importMainCategory) {
+        formData.append('defaultMainCategory', importMainCategory)
+      }
+
+      const response = await fetch(`${getApiUrl()}/api/brands/bulk-import`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setImportResults(data.results)
+        setExcelFile(null)
+        loadBrands()
+        setSuccessMessage(data.message)
+        setShowSuccessPopup(true)
+      } else {
+        setErrorMessage(data.message || 'Error importing brands')
+        setShowErrorPopup(true)
+      }
+    } catch (error) {
+      console.error('Import error:', error)
+      setErrorMessage('Error importing brands: ' + (error.message || 'Unknown error'))
+      setShowErrorPopup(true)
+    } finally {
+      setImporting(false)
     }
   }
 
@@ -286,7 +499,8 @@ function Brands() {
       name: brand.name,
       description: brand.description || '',
       logo: brand.logo?.url || '',
-      brandColor: brand.brandColor || '#667eea'
+      brandColor: brand.brandColor || '#667eea',
+      mainCategory: brand.mainCategory || ''
     })
     setLogoFile(null)
     setLogoPreview(brand.logo?.url || '')
@@ -298,7 +512,8 @@ function Brands() {
       name: '',
       description: '',
       logo: '',
-      brandColor: '#667eea'
+      brandColor: '#667eea',
+      mainCategory: ''
     })
     setLogoFile(null)
     setLogoPreview('')
@@ -397,18 +612,35 @@ function Brands() {
       <div className="page-header">
         <h1 className="page-title">Brand Management</h1>
         <div className="brand-count-badge">
-          {brands.length} Brands
+          {filteredBrands.length} Brands{selectedMainCategory !== 'all' ? ` (${selectedMainCategory})` : ''}
         </div>
       </div>
       
-      <PageSection title="Brands">
+      <PageSection>
         <div className="brands-toolbar">
           <div className="brands-toolbar-left">
             <PrimaryButton onClick={openCreateModal}>
               + New Brand
             </PrimaryButton>
+            <SecondaryButton onClick={() => setShowImportModal(true)}>
+              Import from Excel
+            </SecondaryButton>
+            <SecondaryButton onClick={() => setShowDownloadModal(true)}>
+              Download Brands
+            </SecondaryButton>
           </div>
           <div className="filters">
+            <select
+              value={selectedMainCategory}
+              onChange={(e) => setSelectedMainCategory(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All Main Categories</option>
+              <option value="medical">Medical</option>
+              <option value="it-solutions">IT Solutions</option>
+              <option value="pharmacy">Pharmacy</option>
+              <option value="salon">Salon</option>
+            </select>
             <label className="filter-toggle">
               <input
                 type="checkbox"
@@ -515,6 +747,20 @@ function Brands() {
                     required
                     placeholder="Enter brand name"
                   />
+                </div>
+                <div className="form-group full-width">
+                  <label>Main Category *</label>
+                  <select
+                    value={formData.mainCategory}
+                    onChange={(e) => setFormData({...formData, mainCategory: e.target.value})}
+                    required
+                  >
+                    <option value="">Select a main category *</option>
+                    <option value="medical">Medical</option>
+                    <option value="it-solutions">IT Solutions</option>
+                    <option value="pharmacy">Pharmacy</option>
+                    <option value="salon">Salon</option>
+                  </select>
                 </div>
                 <div className="form-group full-width">
                   <label>Description</label>
@@ -632,6 +878,20 @@ function Brands() {
                     required
                     placeholder="Enter brand name"
                   />
+                </div>
+                <div className="form-group full-width">
+                  <label>Main Category *</label>
+                  <select
+                    value={formData.mainCategory}
+                    onChange={(e) => setFormData({...formData, mainCategory: e.target.value})}
+                    required
+                  >
+                    <option value="">Select a main category *</option>
+                    <option value="medical">Medical</option>
+                    <option value="it-solutions">IT Solutions</option>
+                    <option value="pharmacy">Pharmacy</option>
+                    <option value="salon">Salon</option>
+                  </select>
                 </div>
                 <div className="form-group full-width">
                   <label>Description</label>
@@ -776,8 +1036,242 @@ function Brands() {
           </div>
         </div>
       )}
+
+      {/* Import Excel Modal */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowImportModal(false)
+          setImportMainCategory('')
+          setExcelFile(null)
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ 
+            maxWidth: '800px', 
+            width: '90%',
+            maxHeight: '95vh', 
+            overflowY: 'visible',
+            margin: 'auto',
+            position: 'relative'
+          }}>
+            <div className="modal-header">
+              <h2>Import Brands from Excel</h2>
+              <button className="modal-close" onClick={() => {
+                setShowImportModal(false)
+                setImportMainCategory('')
+                setExcelFile(null)
+              }}>×</button>
+            </div>
+            <div className="import-modal-content" style={{ padding: '16px', overflowY: 'visible', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {/* Default Main Category Section - At the top */}
+              <div className="import-main-category-section" style={{ 
+                marginBottom: '16px', 
+                padding: '12px', 
+                background: '#f5f5f5', 
+                borderRadius: '8px', 
+                border: '1px solid #e0e0e0',
+                width: '100%',
+                maxWidth: '600px'
+              }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#333', textAlign: 'center' }}>
+                  Default Main Category (if not specified in Excel):
+                </label>
+                <select
+                  value={importMainCategory}
+                  onChange={(e) => setImportMainCategory(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', fontSize: '14px', border: '1px solid #e0e0e0', borderRadius: '6px', marginBottom: '6px' }}
+                >
+                  <option value="">Select a main category (Optional - can be specified in Excel)</option>
+                  <option value="medical">Medical</option>
+                  <option value="it-solutions">IT Solutions</option>
+                  <option value="pharmacy">Pharmacy</option>
+                  <option value="salon">Salon</option>
+                </select>
+                <small style={{ display: 'block', color: '#666', fontSize: '11px', lineHeight: '1.3', textAlign: 'center' }}>
+                  If Main Category is not specified in the Excel file, this value will be used for all brands
+                </small>
+              </div>
+
+              {/* Download Template Button */}
+              <div className="import-actions" style={{ marginBottom: '16px', textAlign: 'center', width: '100%', maxWidth: '600px' }}>
+                <SecondaryButton onClick={handleDownloadTemplate} style={{ width: '100%' }}>
+                  📥 Download Template
+                </SecondaryButton>
+              </div>
+
+              {/* Instructions Section */}
+              <div className="import-instructions" style={{ 
+                marginBottom: '16px', 
+                padding: '12px', 
+                background: '#f9f9f9', 
+                borderRadius: '8px', 
+                border: '1px solid #e0e0e0',
+                width: '100%',
+                maxWidth: '600px'
+              }}>
+                <h3 style={{ marginTop: '0', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#333', textAlign: 'center' }}>Instructions:</h3>
+                <ul className="instructions-list" style={{ margin: '0', paddingLeft: '18px', lineHeight: '1.5', fontSize: '12px', color: '#555' }}>
+                  <li style={{ marginBottom: '4px' }}>Download the template file to see the required format</li>
+                  <li style={{ marginBottom: '4px' }}>Required columns: <strong>Brand Name</strong>, <strong>Main Category</strong> (medical/it-solutions/pharmacy/salon)</li>
+                  <li style={{ marginBottom: '4px' }}>Optional columns: <strong>Description</strong>, <strong>Brand Color</strong> (hex code), <strong>Is Active</strong> (true/false), <strong>Logo URL</strong></li>
+                  <li style={{ marginBottom: '4px' }}>Main Category must be one of: <strong>medical</strong>, <strong>it-solutions</strong>, <strong>pharmacy</strong>, or <strong>salon</strong></li>
+                  <li style={{ marginBottom: '0' }}>Maximum file size: 10MB</li>
+                </ul>
+              </div>
+
+              {/* File Upload Section */}
+              <div className="file-upload-section" style={{ marginBottom: '16px', width: '100%', maxWidth: '600px' }}>
+                <label className="file-upload-label" style={{ display: 'block' }}>
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleExcelFileChange}
+                    className="file-input"
+                  />
+                  <div className="file-upload-box">
+                    {excelFile ? (
+                      <div className="file-selected">
+                        <span className="file-name">{excelFile.name}</span>
+                        <button 
+                          type="button" 
+                          className="remove-file-btn"
+                          onClick={() => setExcelFile(null)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="file-upload-placeholder">
+                        <span className="upload-icon-large">📄</span>
+                        <span>Click to select Excel file</span>
+                        <small>.xlsx, .xls, or .csv up to 10MB</small>
+                      </div>
+                    )}
+                  </div>
+                </label>
+              </div>
+
+              {importResults && (
+                <div className="import-results">
+                  <h3>Import Results</h3>
+                  <div className="results-summary">
+                    <span className="result-success">✓ {importResults.success} Successful</span>
+                    <span className="result-failed">✗ {importResults.failed} Failed</span>
+                  </div>
+                  {importResults.errors.length > 0 && (
+                    <div className="errors-list">
+                      <h4>Errors:</h4>
+                      <div className="errors-scroll">
+                        {importResults.errors.map((error, index) => (
+                          <div key={index} className="error-item">
+                            <strong>Row {error.row}:</strong> {error.brandName} - {error.error}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Modal Actions */}
+              <div className="modal-actions" style={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                gap: '12px', 
+                paddingTop: '16px', 
+                borderTop: '1px solid #e0e0e0',
+                marginTop: '16px'
+              }}>
+                <SecondaryButton 
+                  type="button" 
+                  onClick={() => {
+                    setShowImportModal(false)
+                    setImportMainCategory('')
+                    setExcelFile(null)
+                    setImportResults(null)
+                  }}
+                >
+                  Close
+                </SecondaryButton>
+                <PrimaryButton 
+                  onClick={handleBulkImport} 
+                  disabled={!excelFile || importing}
+                >
+                  {importing ? 'Importing...' : 'Import Brands'}
+                </PrimaryButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Download Brands Modal */}
+      {showDownloadModal && (
+        <div className="modal-overlay" onClick={() => setShowDownloadModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>Download Brands</h2>
+              <button className="modal-close" onClick={() => setShowDownloadModal(false)}>×</button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ marginBottom: '20px', color: '#555', fontSize: '14px', fontWeight: '500' }}>
+                Select a main category to download brands from the database:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadBrands('all')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download All Brands
+                </PrimaryButton>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadBrands('medical')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download Medical Brands
+                </PrimaryButton>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadBrands('it-solutions')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download IT Solutions Brands
+                </PrimaryButton>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadBrands('pharmacy')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download Pharmacy Brands
+                </PrimaryButton>
+                <PrimaryButton 
+                  onClick={() => {
+                    handleDownloadBrands('salon')
+                  }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  Download Salon Brands
+                </PrimaryButton>
+              </div>
+              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e0e0e0' }}>
+                <SecondaryButton 
+                  onClick={() => setShowDownloadModal(false)}
+                  style={{ width: '100%' }}
+                >
+                  Cancel
+                </SecondaryButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default Brands
+

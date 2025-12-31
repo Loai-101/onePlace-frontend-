@@ -1,8 +1,6 @@
 /* Calendar Page Styles */
 .calendar-page {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 20px;
   position: relative;
 }
 
@@ -86,15 +84,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 24px;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 16px;
 }
 
 .page-title {
-  font-size: 2rem;
+  font-size: 28px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #1a1a1a;
   margin: 0;
 }
 
@@ -106,9 +104,9 @@
 }
 
 .current-month {
-  font-size: 1.2rem;
+  font-size: 16px;
   font-weight: 500;
-  color: #495057;
+  color: #1a1a1a;
   min-width: 150px;
   text-align: center;
 }
@@ -117,8 +115,8 @@
 .calendar-filters {
   background: white;
   border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 20px;
+  margin-bottom: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -128,21 +126,23 @@
 
 .calendar-filters label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
   font-weight: 500;
-  color: #495057;
-  font-size: 0.95rem;
+  color: #1a1a1a;
+  font-size: 14px;
 }
 
 .calendar-filters select {
   width: 100%;
   max-width: 400px;
-  padding: 0.75rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
   font-family: inherit;
   transition: border-color 0.2s;
+  background: white;
+  color: #1a1a1a;
 }
 
 .calendar-filters select:focus {
@@ -160,7 +160,7 @@
 .calendar-container {
   background: white;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -302,14 +302,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  padding: 20px;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.5rem;
-  color: #2c3e50;
+  font-size: 20px;
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
 .modal-close {
@@ -334,40 +335,42 @@
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 20px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: 12px;
+  padding: 20px;
   border-top: 1px solid #e0e0e0;
 }
 
 /* Form Styles */
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
   font-weight: 500;
-  color: #495057;
-  font-size: 0.9rem;
+  color: #1a1a1a;
+  font-size: 14px;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
   font-family: inherit;
   transition: border-color 0.2s;
+  background: white;
+  color: #1a1a1a;
 }
 
 .form-group input:focus,
@@ -391,13 +394,13 @@
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 12px;
 }
 
 /* Responsive Styles */
 @media (max-width: 768px) {
   .calendar-page {
-    padding: 1rem;
+    padding: 16px;
   }
 
   .calendar-header {
@@ -420,7 +423,7 @@
 
   .modal-content {
     max-width: 100%;
-    margin: 1rem;
+    margin: 16px;
   }
 
   .modal-footer {

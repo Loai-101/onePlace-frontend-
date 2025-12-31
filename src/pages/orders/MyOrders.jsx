@@ -6,6 +6,7 @@ import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import Loading from '../../components/Loading.jsx'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './MyOrders.css'
 
 function MyOrders() {
@@ -26,6 +27,9 @@ function MyOrders() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [selectedMonth, setSelectedMonth] = useState('')
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showOrderDetailsModal, '.modal-content')
 
   useEffect(() => {
     if (token) {

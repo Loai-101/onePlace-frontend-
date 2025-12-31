@@ -107,8 +107,8 @@
 .summary-label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: white;
-  opacity: 0.9;
+  color: white !important;
+  opacity: 1;
   margin-bottom: 0.2rem;
   background: transparent !important;
   border: none !important;
@@ -120,7 +120,7 @@
 .summary-value {
   font-size: 1.1rem;
   font-weight: 700;
-  color: white;
+  color: white !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -129,7 +129,7 @@
 }
 
 .summary-value.profit {
-  color: #2ecc71;
+  color: white !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -483,6 +483,8 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  margin: auto;
+  position: relative;
 }
 
 .modal-header {

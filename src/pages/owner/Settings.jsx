@@ -5,6 +5,7 @@ import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
 import Loading from '../../components/Loading.jsx'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Settings.css'
 
 function Settings() {
@@ -24,6 +25,11 @@ function Settings() {
   const [successPopupMessage, setSuccessPopupMessage] = useState('')
   const [showApprovedPopup, setShowApprovedPopup] = useState(false)
   const [lastCheckedRequestId, setLastCheckedRequestId] = useState(null)
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showNoChangesPopup)
+  usePopupFocus(showSuccessPopup)
+  usePopupFocus(showApprovedPopup)
 
   useEffect(() => {
     if (token) {

@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import Loading from '../../components/Loading.jsx'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Catalog.css'
 
 function Catalog() {
@@ -12,6 +13,7 @@ function Catalog() {
   const isOwner = user?.role === 'owner' || user?.role === 'admin'
   const [companies, setCompanies] = useState([])
   const [loadingAccounts, setLoadingAccounts] = useState(true)
+  const [selectedMainCategory, setSelectedMainCategory] = useState('all')
   const [categories, setCategories] = useState([{ name: 'All', image: null }])
   const [loadingCategories, setLoadingCategories] = useState(true)
   const [brands, setBrands] = useState([{ name: 'All', logo: null }])
@@ -92,7 +94,11 @@ function Catalog() {
       if (!token) return
 
       try {
-        const response = await fetch(`${getApiUrl()}/api/categories`, {
+        let url = `${getApiUrl()}/api/categories`
+        if (selectedMainCategory && selectedMainCategory !== 'all') {
+          url += `?mainCategory=${selectedMainCategory}`
+        }
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -126,7 +132,7 @@ function Catalog() {
     }
 
     loadCategories()
-  }, [token])
+  }, [token, selectedMainCategory])
 
   // Fetch brands from API
   useEffect(() => {
@@ -134,7 +140,11 @@ function Catalog() {
       if (!token) return
 
       try {
-        const response = await fetch(`${getApiUrl()}/api/brands`, {
+        let url = `${getApiUrl()}/api/brands`
+        if (selectedMainCategory && selectedMainCategory !== 'all') {
+          url += `?mainCategory=${selectedMainCategory}`
+        }
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -164,7 +174,7 @@ function Catalog() {
     }
 
     loadBrands()
-  }, [token])
+  }, [token, selectedMainCategory])
 
   // Fetch products from API
   useEffect(() => {
@@ -172,7 +182,11 @@ function Catalog() {
       if (!token) return
 
       try {
-        const response = await fetch(`${getApiUrl()}/api/products?limit=1000&status=active`, {
+        let url = `${getApiUrl()}/api/products?limit=1000&status=active`
+        if (selectedMainCategory && selectedMainCategory !== 'all') {
+          url += `&mainCategory=${selectedMainCategory}`
+        }
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -221,7 +235,7 @@ function Catalog() {
     }
 
     loadProducts()
-  }, [token])
+  }, [token, selectedMainCategory])
 
   // State for filters
   const [selectedCompany, setSelectedCompany] = useState('All')
@@ -362,6 +376,10 @@ function Catalog() {
 
   // State for validation popup
   const [showValidationPopup, setShowValidationPopup] = useState(false)
+  const validationPopupRef = useRef(null)
+  
+  // Auto-focus popup when it opens
+  usePopupFocus(showValidationPopup, '.validation-popup')
   
   // State for success popup
   const [showSuccessPopup, setShowSuccessPopup] = useState({
@@ -510,6 +528,58 @@ function Catalog() {
   return (
     <div className="catalog-page">
       <h1 className="page-title">Product Menu</h1>
+      
+      {/* Main Category Filter - Shows Menu, Products, Categories, Brands filtered by mainCategory */}
+      <div className="main-category-filter-section" style={{
+        background: '#f5f5f5',
+        padding: '1.5rem',
+        borderRadius: '8px',
+        marginBottom: '1.5rem',
+        border: '1px solid #e0e0e0'
+      }}>
+        <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem', color: '#333' }}>Filter by Main Category</h3>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <label style={{ fontWeight: '500', color: '#555' }}>Main Category:</label>
+          <select
+            value={selectedMainCategory}
+            onChange={(e) => {
+              setSelectedMainCategory(e.target.value)
+              // Reset all filters when main category changes
+              setSelectedCategory('All')
+              setSelectedBrand('All')
+              setSelectedTag('All')
+              setSelectedVat('All')
+              setSearchTerm('')
+              setPriceFilter('All')
+              setStockFilter('All')
+            }}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              border: '1px solid #ddd',
+              fontSize: '1rem',
+              minWidth: '200px',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="all">All Categories</option>
+            <option value="medical">Medical</option>
+            <option value="it-solutions">IT Solutions</option>
+            <option value="pharmacy">Pharmacy</option>
+            <option value="salon">Salon</option>
+          </select>
+          <div style={{ marginLeft: 'auto', fontSize: '0.9rem', color: '#666' }}>
+            {selectedMainCategory !== 'all' && (
+              <span>
+                Showing: <strong>{selectedMainCategory === 'medical' ? 'Medical' : selectedMainCategory === 'it-solutions' ? 'IT Solutions' : selectedMainCategory === 'pharmacy' ? 'Pharmacy' : 'Salon'}</strong> - 
+                Products: {filteredProducts.length} | 
+                Categories: {categories.filter(c => c.name !== 'All').length} | 
+                Brands: {brands.filter(b => b.name !== 'All').length}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
       
       {isOwner && (
         <div style={{ 
@@ -1084,7 +1154,7 @@ function Catalog() {
       {/* Validation Popup */}
       {showValidationPopup && (
         <div className="validation-popup-overlay">
-          <div className="validation-popup">
+          <div className="validation-popup" ref={validationPopupRef} tabIndex={-1}>
             <div className="popup-header">
               <h3>⚠️ Required Information Missing</h3>
               <button 

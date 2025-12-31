@@ -184,6 +184,20 @@ function OwnerCalendar() {
     }
   }
 
+  // Get display text for event tag
+  const getEventTagText = (event) => {
+    if (event.type === 'todo') {
+      // For todo: Event Type + Title
+      return `TODO: ${event.title}`
+    } else if (event.type === 'visit') {
+      // For visit: Event Type + Account
+      const accountName = event.account?.name || event.accountName || 'Unknown Account'
+      return `VISIT: ${accountName}`
+    }
+    // Fallback
+    return event.title
+  }
+
   return (
     <div className="calendar-page">
       <div className="calendar-header">
@@ -262,9 +276,9 @@ function OwnerCalendar() {
                             e.stopPropagation()
                             handleEventClick(event)
                           }}
-                          title={`${event.title} - ${event.createdBy?.name || 'Unknown'}`}
+                          title={getEventTagText(event)}
                         >
-                          {event.title}
+                          {getEventTagText(event)}
                         </div>
                       ))}
                       {dayEvents.length > 3 && (
@@ -322,19 +336,15 @@ function OwnerCalendar() {
                       style={{ backgroundColor: getEventColor(event, index, selectedDayEvents) }}
                     ></div>
                     <div className="event-item-content">
-                      <div className="event-item-title">{event.title}</div>
+                      <div className="event-item-title">{getEventTagText(event)}</div>
                       <div className="event-item-details">
-                        {event.type === 'visit' && (
-                          <span className="event-item-type">Visit</span>
-                        )}
-                        {event.type === 'todo' && (
-                          <span className="event-item-type">Todo</span>
-                        )}
                         {event.startTime && (
                           <span className="event-item-time">{event.startTime}</span>
                         )}
-                        {event.accountName && (
-                          <span className="event-item-account">{event.accountName}</span>
+                        {event.type === 'visit' && (
+                          <span className="event-item-account">
+                            {event.account?.name || event.accountName || 'Unknown Account'}
+                          </span>
                         )}
                         {event.createdBy?.name && (
                           <span className="event-item-salesman">Salesman: {event.createdBy.name}</span>

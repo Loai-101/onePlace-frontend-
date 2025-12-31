@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../utils/security';
 import Loading from '../../components/Loading.jsx';
+import { usePopupFocus } from '../../hooks/usePopupFocus';
 import './AdminDashboard.css';
 import AdminManagement from './AdminManagement';
 import CompanyUpdateRequests from './CompanyUpdateRequests';
@@ -41,6 +42,12 @@ function AdminDashboard() {
   const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
   const [showEditAdminModal, setShowEditAdminModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showRejectModal, '.modal-content');
+  usePopupFocus(showCompanyProfile, '.modal-content');
+  usePopupFocus(showApproveConfirm, '.modal-content');
+  usePopupFocus(showSuccessPopup);
   const [newAdminData, setNewAdminData] = useState({
     username: '',
     email: '',

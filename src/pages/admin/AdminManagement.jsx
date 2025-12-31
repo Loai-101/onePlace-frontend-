@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getApiUrl } from '../../utils/security';
+import { usePopupFocus } from '../../hooks/usePopupFocus';
 import './AdminManagement.css';
 
 function AdminManagement({ onClose }) {
@@ -7,6 +8,10 @@ function AdminManagement({ onClose }) {
   const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
   const [showEditAdminModal, setShowEditAdminModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showCreateAdminModal, '.modal-content');
+  usePopupFocus(showEditAdminModal, '.modal-content');
   const [newAdminData, setNewAdminData] = useState({
     username: '',
     email: '',

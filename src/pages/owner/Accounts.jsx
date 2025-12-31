@@ -6,6 +6,7 @@ import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import Loading from '../../components/Loading.jsx'
 import { getApiUrl } from '../../utils/security'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Accounts.css'
 
 function Accounts() {
@@ -57,6 +58,13 @@ function Accounts() {
   const [excelFile, setExcelFile] = useState(null)
   const [importing, setImporting] = useState(false)
   const [importResults, setImportResults] = useState(null)
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showCreateModal, '.modal-content')
+  usePopupFocus(showEditModal, '.modal-content')
+  usePopupFocus(showViewModal, '.modal-content')
+  usePopupFocus(showImportModal, '.modal-content')
+  usePopupFocus(showConfirmPopup)
 
   useEffect(() => {
     if (token) {
@@ -267,15 +275,23 @@ function Accounts() {
         })
     )
     
+    // Combine address fields into a single address string
+    const combinedAddress = [
+      account.address?.flatShopNo,
+      account.address?.building,
+      account.address?.road,
+      account.address?.block
+    ].filter(Boolean).join(', ') || account.address?.flatShopNo || ''
+    
     setFormData({
       name: account.name || '',
       phone: account.phone || '',
       email: account.email || '',
       address: {
-        flatShopNo: account.address?.flatShopNo || '',
-        building: account.address?.building || '',
-        road: account.address?.road || '',
-        block: account.address?.block || '',
+        flatShopNo: combinedAddress,
+        building: '',
+        road: '',
+        block: '',
         area: account.address?.area || ''
       },
       staff: staffWithSpecializations,
@@ -729,10 +745,10 @@ function Accounts() {
               + New Account
             </PrimaryButton>
             <SecondaryButton onClick={() => setShowImportModal(true)}>
-              📊 Import from Excel
+              Import from Excel
             </SecondaryButton>
             <SecondaryButton onClick={handleDownloadAllAccounts}>
-              ⬇️ Download All Accounts
+              Download All Accounts
             </SecondaryButton>
           </div>
           <div className="accounts-toolbar-right">
@@ -921,70 +937,46 @@ function Accounts() {
               </div>
 
               <div className="form-group">
-                <label>Address *</label>
-                <div className="address-fields">
-                  <div className="form-group">
-                    <label htmlFor="flatShopNo">Flat/Shop No.</label>
-                    <input
-                      type="text"
-                      id="flatShopNo"
-                      value={formData.address?.flatShopNo || ''}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        address: { ...(formData.address || {}), flatShopNo: e.target.value }
-                      })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="building">Building</label>
-                    <input
-                      type="text"
-                      id="building"
-                      value={formData.address?.building || ''}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        address: { ...(formData.address || {}), building: e.target.value }
-                      })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="road">Road</label>
-                    <input
-                      type="text"
-                      id="road"
-                      value={formData.address?.road || ''}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        address: { ...(formData.address || {}), road: e.target.value }
-                      })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="block">Block</label>
-                    <input
-                      type="text"
-                      id="block"
-                      value={formData.address?.block || ''}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        address: { ...(formData.address || {}), block: e.target.value }
-                      })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="area">Area *</label>
-                    <input
-                      type="text"
-                      id="area"
-                      value={formData.address?.area || ''}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        address: { ...(formData.address || {}), area: e.target.value }
-                      })}
-                      required
-                    />
-                  </div>
-                </div>
+                <label htmlFor="address">Address *</label>
+                <input
+                  type="text"
+                  id="address"
+                  value={[
+                    formData.address?.flatShopNo,
+                    formData.address?.building,
+                    formData.address?.road,
+                    formData.address?.block
+                  ].filter(Boolean).join(', ') || ''}
+                  onChange={(e) => {
+                    const addressValue = e.target.value
+                    // Store the full address in flatShopNo for backend compatibility
+                    setFormData({
+                      ...formData,
+                      address: {
+                        ...(formData.address || {}),
+                        flatShopNo: addressValue,
+                        building: '',
+                        road: '',
+                        block: ''
+                      }
+                    })
+                  }}
+                  placeholder="Enter full address (Flat/Shop No., Building, Road, Block)"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="area">Area *</label>
+                <input
+                  type="text"
+                  id="area"
+                  value={formData.address?.area || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    address: { ...(formData.address || {}), area: e.target.value }
+                  })}
+                  required
+                />
               </div>
 
               <div className="form-group">
@@ -1073,7 +1065,7 @@ function Accounts() {
                     </div>
                     
                     <div className="form-group">
-                      <label htmlFor={`medicalBranch-${index}`}>Medical Specialties *</label>
+                      <label htmlFor={`medicalBranch-${index}`}>Medical Specialties</label>
                       <select
                         id={`medicalBranch-${index}`}
                         value={staffMember.medicalBranch || ''}
@@ -1111,9 +1103,8 @@ function Accounts() {
                             setFormData({ ...formData, staff: updatedStaff })
                           }
                         }}
-                        required
                       >
-                        <option value="">Select a branch</option>
+                        <option value="">Select a branch (Optional)</option>
                         {medicalBranches.map(branch => (
                           <option key={branch.value} value={branch.value}>
                             {branch.label}
@@ -1169,23 +1160,21 @@ function Accounts() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="vat">VAT Number *</label>
+                  <label htmlFor="vat">VAT Number</label>
                   <input
                     type="text"
                     id="vat"
                     value={formData.vat || ''}
                     onChange={(e) => setFormData({ ...formData, vat: e.target.value })}
-                    required
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="crNumber">CR Number *</label>
+                  <label htmlFor="crNumber">CR Number</label>
                   <input
                     type="text"
                     id="crNumber"
                     value={formData.crNumber || ''}
                     onChange={(e) => setFormData({ ...formData, crNumber: e.target.value })}
-                    required
                   />
                 </div>
               </div>
@@ -1272,20 +1261,15 @@ function Accounts() {
               <div className="view-section">
                 <h3>Address</h3>
                 <div className="view-field">
-                  <strong>Flat/Shop No.:</strong>
-                  <span>{viewAccount.address?.flatShopNo || 'N/A'}</span>
-                </div>
-                <div className="view-field">
-                  <strong>Building:</strong>
-                  <span>{viewAccount.address?.building || 'N/A'}</span>
-                </div>
-                <div className="view-field">
-                  <strong>Road:</strong>
-                  <span>{viewAccount.address?.road || 'N/A'}</span>
-                </div>
-                <div className="view-field">
-                  <strong>Block:</strong>
-                  <span>{viewAccount.address?.block || 'N/A'}</span>
+                  <strong>Address:</strong>
+                  <span>{
+                    [
+                      viewAccount.address?.flatShopNo,
+                      viewAccount.address?.building,
+                      viewAccount.address?.road,
+                      viewAccount.address?.block
+                    ].filter(Boolean).join(', ') || 'N/A'
+                  }</span>
                 </div>
                 <div className="view-field">
                   <strong>Area:</strong>

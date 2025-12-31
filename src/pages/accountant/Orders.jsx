@@ -8,6 +8,7 @@ import SecondaryButton from '../../components/SecondaryButton.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import Loading from '../../components/Loading.jsx'
 import jsPDF from 'jspdf'
+import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Orders.css'
 
 function AccountantOrders() {
@@ -42,6 +43,12 @@ function AccountantOrders() {
   const [showPopup, setShowPopup] = useState(false)
   const [popupMessage, setPopupMessage] = useState('')
   const [popupType, setPopupType] = useState('success') // 'success' or 'error'
+  
+  // Auto-focus popups when they open
+  usePopupFocus(showOrderDetailsModal, '.modal-content')
+  usePopupFocus(showStatusModal, '.modal-content')
+  usePopupFocus(showPdfModal, '.modal-content')
+  usePopupFocus(showPopup)
 
   // Read URL parameters on mount
   useEffect(() => {
@@ -65,9 +72,19 @@ function AccountantOrders() {
     try {
       setLoadingUsers(true)
       // Extract company ID - handle both object and string formats
-      const companyId = typeof user.company === 'object' 
-        ? (user.company._id || user.company)
-        : user.company
+      let companyId = null
+      if (user?.company) {
+        if (typeof user.company === 'object' && user.company !== null) {
+          companyId = user.company._id || user.company.id || (typeof user.company.toString === 'function' ? user.company.toString() : null)
+        } else if (typeof user.company === 'string') {
+          companyId = user.company
+        }
+      }
+      
+      // Ensure companyId is a string
+      if (companyId) {
+        companyId = String(companyId)
+      }
       
       if (!companyId) {
         console.error('Company ID not found')
