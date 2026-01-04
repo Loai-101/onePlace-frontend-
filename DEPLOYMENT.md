@@ -7,17 +7,17 @@
 Before deploying, you need to set the following environment variable in Vercel:
 
 **Variable Name:** `VITE_API_URL`  
-**Value:** `https://oneplace-backend-0xjq.onrender.com`
+**Value:** `https://oneplace.now`
 
 **Important Notes:**
 - Do NOT include `/api` at the end of the URL
 - The application automatically adds `/api` to all API calls
 - For local development, use: `http://localhost:5000`
-- For production, use: `https://oneplace-backend-0xjq.onrender.com`
+- For production, use: `https://oneplace.now`
 
 **Current Production URLs:**
-- Frontend: https://one-place-frontend.vercel.app/
-- Backend: https://oneplace-backend-0xjq.onrender.com
+- Frontend: https://oneplace.now/
+- Backend: https://oneplace.now
 
 ### 2. Setting Environment Variables in Vercel
 

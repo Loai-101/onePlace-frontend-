@@ -1,0 +1,23 @@
+# robots.txt for https://oneplace.now/
+
+User-agent: *
+Allow: /
+
+# Disallow admin and API routes
+Disallow: /api/
+Disallow: /dashboard/owner/
+Disallow: /dashboard/accountant/
+Disallow: /admin/
+
+# Allow important pages
+Allow: /
+Allow: /login
+Allow: /dashboard/catalog
+Allow: /dashboard/orders
+
+# Sitemap location
+Sitemap: https://oneplace.now/sitemap.xml
+
+# Crawl-delay (optional, helps prevent server overload)
+Crawl-delay: 1
+

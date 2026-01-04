@@ -1731,23 +1731,27 @@ function Users() {
                             })}
                           </td>
                           <td style={{ padding: '12px', fontSize: '14px' }}>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                              {activity.pages.map((page, index) => (
-                                <span
-                                  key={index}
-                                  style={{
-                                    padding: '4px 8px',
-                                    background: '#e3f2fd',
-                                    color: '#1976d2',
-                                    borderRadius: '4px',
-                                    fontSize: '12px',
-                                    fontWeight: '500'
-                                  }}
-                                >
-                                  {page}
-                                </span>
-                              ))}
-                            </div>
+                            {activity.pages && activity.pages.length > 0 ? (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {activity.pages.map((page, index) => (
+                                  <span
+                                    key={index}
+                                    style={{
+                                      padding: '4px 8px',
+                                      background: '#e3f2fd',
+                                      color: '#1976d2',
+                                      borderRadius: '4px',
+                                      fontSize: '12px',
+                                      fontWeight: '500'
+                                    }}
+                                  >
+                                    {page}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span style={{ color: '#999', fontStyle: 'italic' }}>No pages visited</span>
+                            )}
                           </td>
                           <td style={{ padding: '12px', fontSize: '14px', color: '#666' }}>
                             {activity.duration}

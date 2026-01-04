@@ -41,6 +41,9 @@ import ClinicForm from './pages/clinics/ClinicForm.jsx'
 // Calendar pages
 import Calendar from './pages/calendar/Calendar.jsx'
 
+// Salesman pages
+import SalesmanDashboard from './pages/salesman/Dashboard.jsx'
+
 // Admin pages
 import AdminLogin from './pages/admin/AdminLogin.jsx'
 import AdminDashboard from './pages/admin/AdminDashboard.jsx'
@@ -106,6 +109,9 @@ export default function Router() {
 
         {/* Calendar routes */}
         <Route path="calendar" element={<Calendar />} />
+
+        {/* Salesman routes */}
+        <Route path="salesman" element={<SalesmanDashboard />} />
       </Route>
 
       {/* Admin routes */}

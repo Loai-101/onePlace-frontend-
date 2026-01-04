@@ -162,19 +162,25 @@ function MyOrders() {
     return `BD ${parseFloat(amount || 0).toFixed(2)}`
   }
 
-  // Get status badge color
+  // Get status badge color - matching salesman dashboard colors
   const getStatusBadgeColor = (status) => {
-    switch (status) {
-      case 'APPROVED': return { bg: '#d4edda', color: '#155724' }
-      case 'UNDER_REVIEW': return { bg: '#cce5ff', color: '#004085' }
-      case 'PENDING_REVIEW': return { bg: '#fff3cd', color: '#856404' }
-      case 'REJECTED': return { bg: '#f8d7da', color: '#721c24' }
-      case 'CANCELLED': return { bg: '#6c757d', color: '#ffffff' }
-      case 'delivered': return { bg: '#d4edda', color: '#155724' }
-      case 'shipped': return { bg: '#cce5ff', color: '#004085' }
-      case 'processing': return { bg: '#fff3cd', color: '#856404' }
-      case 'pending': return { bg: '#f8d7da', color: '#721c24' }
-      default: return { bg: '#e2e3e5', color: '#383d41' }
+    const normalizedStatus = (status || '').toLowerCase()
+    switch (normalizedStatus) {
+      case 'approved': return { bg: '#198754', color: '#ffffff' }
+      case 'under_review':
+      case 'under-review': return { bg: '#17a2b8', color: '#ffffff' }
+      case 'pending_review':
+      case 'pending-review': return { bg: '#ffc107', color: '#000000' }
+      case 'rejected': return { bg: '#e83e8c', color: '#ffffff' }
+      case 'cancelled': return { bg: '#dc3545', color: '#ffffff' }
+      case 'delivered': return { bg: '#28a745', color: '#ffffff' }
+      case 'shipped': return { bg: '#6f42c1', color: '#ffffff' }
+      case 'processing': return { bg: '#007bff', color: '#ffffff' }
+      case 'confirmed': return { bg: '#17a2b8', color: '#ffffff' }
+      case 'pending': return { bg: '#ffc107', color: '#000000' }
+      case 'returned': return { bg: '#fd7e14', color: '#ffffff' }
+      case 'completed': return { bg: '#20c997', color: '#ffffff' }
+      default: return { bg: '#6c757d', color: '#ffffff' }
     }
   }
 
@@ -378,7 +384,7 @@ function MyOrders() {
                       <td className="payment-method">{getPaymentMethodDisplay(order.payment?.method)}</td>
                       <td className="status-cell">
                         <span 
-                          className="status-badge"
+                          className={`status-badge status-${(order.accountantReviewStatus || order.status || 'pending').toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-')}`}
                           style={{ 
                             backgroundColor: statusColors.bg,
                             color: statusColors.color

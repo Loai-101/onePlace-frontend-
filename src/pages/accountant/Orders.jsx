@@ -243,14 +243,25 @@ function AccountantOrders() {
     }
   }
 
+  // Get status badge color - matching other pages colors
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'PENDING_REVIEW': return { bg: '#fff3cd', color: '#856404' }
-      case 'UNDER_REVIEW': return { bg: '#cce5ff', color: '#004085' }
-      case 'APPROVED': return { bg: '#d4edda', color: '#155724' }
-      case 'REJECTED': return { bg: '#f8d7da', color: '#721c24' }
-      case 'CANCELLED': return { bg: '#6c757d', color: '#ffffff' }
-      default: return { bg: '#f8f9fa', color: '#6c757d' }
+    const normalizedStatus = (status || '').toLowerCase()
+    switch (normalizedStatus) {
+      case 'approved': return { bg: '#198754', color: '#ffffff' }
+      case 'under_review':
+      case 'under-review': return { bg: '#17a2b8', color: '#ffffff' }
+      case 'pending_review':
+      case 'pending-review': return { bg: '#ffc107', color: '#000000' }
+      case 'rejected': return { bg: '#e83e8c', color: '#ffffff' }
+      case 'cancelled': return { bg: '#dc3545', color: '#ffffff' }
+      case 'delivered': return { bg: '#28a745', color: '#ffffff' }
+      case 'shipped': return { bg: '#6f42c1', color: '#ffffff' }
+      case 'processing': return { bg: '#007bff', color: '#ffffff' }
+      case 'confirmed': return { bg: '#17a2b8', color: '#ffffff' }
+      case 'pending': return { bg: '#ffc107', color: '#000000' }
+      case 'returned': return { bg: '#fd7e14', color: '#ffffff' }
+      case 'completed': return { bg: '#20c997', color: '#ffffff' }
+      default: return { bg: '#6c757d', color: '#ffffff' }
     }
   }
 
@@ -1185,13 +1196,13 @@ function AccountantOrders() {
                       </td>
                       <td>
                         <span 
-                          className="status-badge"
+                          className={`status-badge status-${status.toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-')}`}
                           style={{ 
                             backgroundColor: statusStyle.bg,
                             color: statusStyle.color
                           }}
                         >
-                          {status.replace('_', ' ')}
+                          {status.replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td>{formatCurrency(order.pricing?.total)}</td>
@@ -1260,7 +1271,13 @@ function AccountantOrders() {
                   </div>
                   <div className="detail-item">
                     <label>Status:</label>
-                    <span>{selectedOrder.accountantReviewStatus || 'PENDING_REVIEW'}</span>
+                    <span>
+                      <span 
+                        className={`status-badge status-${((selectedOrder.accountantReviewStatus || 'PENDING_REVIEW').toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-'))}`}
+                      >
+                        {(selectedOrder.accountantReviewStatus || 'PENDING_REVIEW').replace(/_/g, ' ')}
+                      </span>
+                    </span>
                   </div>
                   <div className="detail-item">
                     <label>Total:</label>

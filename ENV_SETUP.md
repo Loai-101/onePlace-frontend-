@@ -6,7 +6,7 @@ You need to set the following environment variable in your Vercel project:
 
 ### Variable: `VITE_API_URL`
 
-**Value:** `https://oneplace-backend-0xjq.onrender.com`
+**Value:** `https://oneplace.now`
 
 **Important:** 
 - Do NOT include `/api` at the end
@@ -20,7 +20,7 @@ You need to set the following environment variable in your Vercel project:
 4. Click **Add New**
 5. Enter:
    - **Key:** `VITE_API_URL`
-   - **Value:** `https://oneplace-backend-0xjq.onrender.com`
+   - **Value:** `https://oneplace.now`
    - **Environment:** Select all (Production, Preview, Development)
 6. Click **Save**
 7. **Important:** Redeploy your application for the changes to take effect
@@ -43,14 +43,15 @@ After redeployment, check:
 
 ## Current URLs
 
-- **Frontend:** https://one-place-frontend.vercel.app/
-- **Backend:** https://oneplace-backend-0xjq.onrender.com
+- **Frontend:** https://oneplace.now/
+- **Backend:** https://oneplace.now
 
 ## Troubleshooting
 
 ### Issue: API calls failing with CORS errors
 
-**Solution:** Make sure your backend (Render) has CORS configured to allow requests from:
+**Solution:** Make sure your backend has CORS configured to allow requests from:
+- `https://oneplace.now`
 - `https://one-place-frontend.vercel.app`
 - `https://*.vercel.app` (for preview deployments)
 
@@ -66,6 +67,6 @@ After redeployment, check:
 **Solution:** 
 - Verify the backend URL doesn't end with `/api`
 - Check that the backend is running and accessible
-- Test the backend URL directly: `https://oneplace-backend-0xjq.onrender.com/api/health`
+- Test the backend URL directly: `https://oneplace.now/api/health`
 
 

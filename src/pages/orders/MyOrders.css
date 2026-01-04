@@ -200,12 +200,78 @@
 
 .status-badge {
   padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: capitalize;
   letter-spacing: 0.5px;
   display: inline-block;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #ffffff !important;
+  background-color: #6c757d !important;
+}
+
+/* Status badge colors - matching salesman dashboard colors */
+.status-badge.status-pending {
+  background: #ffc107 !important;
+  color: #000000 !important;
+}
+
+.status-badge.status-confirmed {
+  background: #17a2b8 !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-processing {
+  background: #007bff !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-shipped {
+  background: #6f42c1 !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-delivered {
+  background: #28a745 !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-cancelled {
+  background: #dc3545 !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-returned {
+  background: #fd7e14 !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-completed {
+  background: #20c997 !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-approved {
+  background: #198754 !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-rejected {
+  background: #e83e8c !important;
+  color: #ffffff !important;
+}
+
+.status-badge.status-pending-review,
+.status-badge.status-pending_review {
+  background: #ffc107 !important;
+  color: #000000 !important;
+}
+
+.status-badge.status-under-review,
+.status-badge.status-under_review {
+  background: #17a2b8 !important;
+  color: #ffffff !important;
 }
 
 .total-amount {

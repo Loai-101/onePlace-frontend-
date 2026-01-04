@@ -1,0 +1,323 @@
+/* Salesman Dashboard Styles */
+.salesman-dashboard {
+  padding: 20px;
+}
+
+/* Summary Cards */
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.summary-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: #000000;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card .summary-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #000000 !important;
+  margin-bottom: 8px;
+}
+
+.summary-card .summary-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000 !important;
+}
+
+.summary-progress {
+  margin-top: 12px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Charts Section */
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.chart-container {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+
+/* Recent Orders */
+.recent-orders {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.recent-orders h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+
+.orders-table {
+  overflow-x: auto;
+}
+
+.orders-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table th {
+  background: #f8f9fa;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.orders-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.orders-table tr:hover {
+  background: #f8f9fa;
+}
+
+.salesman-dashboard .status-badge,
+.recent-orders .status-badge,
+.orders-table .status-badge,
+.salesman-dashboard table .status-badge,
+.recent-orders table .status-badge,
+.orders-table table .status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #ffffff !important;
+  background-color: #6c757d !important;
+}
+
+/* Status badge colors - each status has a unique color */
+.salesman-dashboard .status-badge.status-pending,
+.recent-orders .status-badge.status-pending,
+.orders-table .status-badge.status-pending {
+  background: #ffc107 !important;
+  color: #000000 !important;
+}
+
+.salesman-dashboard .status-badge.status-confirmed,
+.recent-orders .status-badge.status-confirmed,
+.orders-table .status-badge.status-confirmed {
+  background: #17a2b8 !important;
+  color: #ffffff !important;
+}
+
+.salesman-dashboard .status-badge.status-processing,
+.recent-orders .status-badge.status-processing,
+.orders-table .status-badge.status-processing {
+  background: #007bff !important;
+  color: #ffffff !important;
+}
+
+.salesman-dashboard .status-badge.status-shipped,
+.recent-orders .status-badge.status-shipped,
+.orders-table .status-badge.status-shipped {
+  background: #6f42c1 !important;
+  color: #ffffff !important;
+}
+
+.salesman-dashboard .status-badge.status-delivered,
+.recent-orders .status-badge.status-delivered,
+.orders-table .status-badge.status-delivered {
+  background: #28a745 !important;
+  color: #ffffff !important;
+}
+
+.salesman-dashboard .status-badge.status-cancelled,
+.recent-orders .status-badge.status-cancelled,
+.orders-table .status-badge.status-cancelled {
+  background: #dc3545 !important;
+  color: #ffffff !important;
+}
+
+.salesman-dashboard .status-badge.status-returned,
+.recent-orders .status-badge.status-returned,
+.orders-table .status-badge.status-returned {
+  background: #fd7e14 !important;
+  color: #ffffff !important;
+}
+
+.salesman-dashboard .status-badge.status-completed,
+.recent-orders .status-badge.status-completed,
+.orders-table .status-badge.status-completed {
+  background: #20c997 !important;
+  color: #ffffff !important;
+}
+
+.salesman-dashboard .status-badge.status-approved,
+.recent-orders .status-badge.status-approved,
+.orders-table .status-badge.status-approved {
+  background: #198754 !important;
+  color: #ffffff !important;
+}
+
+.salesman-dashboard .status-badge.status-rejected,
+.recent-orders .status-badge.status-rejected,
+.orders-table .status-badge.status-rejected {
+  background: #e83e8c !important;
+  color: #ffffff !important;
+}
+
+/* Additional status variations */
+.salesman-dashboard .status-badge.status-pending-review,
+.recent-orders .status-badge.status-pending-review,
+.orders-table .status-badge.status-pending-review,
+.salesman-dashboard .status-badge.status-pending_review,
+.recent-orders .status-badge.status-pending_review,
+.orders-table .status-badge.status-pending_review {
+  background: #ffc107 !important;
+  color: #000000 !important;
+}
+
+.salesman-dashboard .status-badge.status-under-review,
+.recent-orders .status-badge.status-under-review,
+.orders-table .status-badge.status-under-review,
+.salesman-dashboard .status-badge.status-under_review,
+.recent-orders .status-badge.status-under_review,
+.orders-table .status-badge.status-under_review {
+  background: #17a2b8 !important;
+  color: #ffffff !important;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.btn-link:hover {
+  color: #0056b3;
+}
+
+/* Error Message */
+.error-message {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  color: #721c24;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.error-message p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.btn-primary {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-table {
+    font-size: 0.75rem;
+  }
+
+  .orders-table th,
+  .orders-table td {
+    padding: 8px;
+  }
+}
+

@@ -407,9 +407,10 @@ function OwnerDashboard() {
     // Order status distribution
     const statusMap = {}
     filteredOrders.forEach(order => {
-      const status = order.status || 'pending'
+      const status = order.accountantReviewStatus || order.status || order.orderStatus || 'pending' // Priority: accountantReviewStatus > status > orderStatus
+      const displayStatus = status.replace(/_/g, ' ') // Replace underscores with spaces for display
       if (!statusMap[status]) {
-        statusMap[status] = { name: status.charAt(0).toUpperCase() + status.slice(1), value: 0, amount: 0 }
+        statusMap[status] = { name: displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1), value: 0, amount: 0 }
       }
       statusMap[status].value += 1
       statusMap[status].amount += order.pricing?.total || 0
@@ -1438,8 +1439,8 @@ function OwnerDashboard() {
                         </span>
                       </td>
                       <td>
-                        <span className={`status-badge status-${orderStatus.toLowerCase().replace('_', '-')}`}>
-                          {orderStatus.replace('_', ' ')}
+                        <span className={`status-badge status-${orderStatus.toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-')}`}>
+                          {orderStatus.replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td>{formatCurrency(orderTotal)}</td>

@@ -26,7 +26,7 @@ cp .env.example .env
 VITE_API_URL=http://localhost:5000
 
 # For production (set in Vercel environment variables)
-# VITE_API_URL=https://oneplace-backend-0xjq.onrender.com
+# VITE_API_URL=https://oneplace.now
 ```
 
 ### Development
