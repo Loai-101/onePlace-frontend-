@@ -144,11 +144,21 @@ export const AuthProvider = ({ children }) => {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        // Prepare data - ensure numberOfUsers is a number
+        const registrationData = {
+          ...companyData,
+          numberOfUsers: parseInt(companyData.numberOfUsers, 10) || 1,
+          // Ensure country has a default value
+          companyCountry: companyData.companyCountry || 'Bahrain'
+        }
+
         console.log(`🔍 Attempt ${attempt}/${maxRetries} - Sending registration data:`, {
-          companyName: companyData.companyName,
-          companyEmail: companyData.companyEmail,
-          ownerUsername: companyData.ownerUsername,
-          ownerEmail: companyData.ownerEmail
+          companyName: registrationData.companyName,
+          companyEmail: registrationData.companyEmail,
+          ownerUsername: registrationData.ownerUsername,
+          ownerEmail: registrationData.ownerEmail,
+          numberOfUsers: registrationData.numberOfUsers,
+          companyCountry: registrationData.companyCountry
         })
         
         // Test backend connectivity first
@@ -163,7 +173,7 @@ export const AuthProvider = ({ children }) => {
             console.log('🏥 Backend health check:', healthResponse.status)
           } catch (healthError) {
             console.error('❌ Backend health check failed:', healthError)
-            lastError = new Error('Cannot connect to server. Please ensure the backend is running on port 5000.')
+            lastError = new Error('Cannot connect to server. Please ensure the backend is running.')
             continue
           }
         }
@@ -173,7 +183,7 @@ export const AuthProvider = ({ children }) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(companyData),
+          body: JSON.stringify(registrationData),
         })
 
         console.log('📡 Registration response:', { 
@@ -200,12 +210,20 @@ export const AuthProvider = ({ children }) => {
           // Handle specific error types
           if (data?.message?.includes('already exists')) {
             return { success: false, error: data.message }
-          } else if (data?.message?.includes('validation')) {
-            return { success: false, error: data.message }
+          } else if (data?.message?.includes('validation') || data?.message?.includes('Validation')) {
+            const errorMsg = data.errors && Array.isArray(data.errors) 
+              ? data.errors.join(', ') 
+              : data.message
+            return { success: false, error: errorMsg }
+          } else if (data?.message?.includes('Missing required fields')) {
+            const errorMsg = data.errors && Array.isArray(data.errors) 
+              ? `Missing required fields: ${data.errors.join(', ')}` 
+              : data.message
+            return { success: false, error: errorMsg }
           } else if (data?.errors && Array.isArray(data.errors)) {
             return { success: false, error: data.errors.join(', ') }
           } else {
-            return { success: false, error: data?.message || 'Company registration failed' }
+            return { success: false, error: data?.message || `Company registration failed (Status: ${response.status})` }
           }
         }
       } catch (error) {
