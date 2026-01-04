@@ -663,48 +663,84 @@ function Users() {
     setActivityDateFilter('')
     
     try {
-      // For now, we'll use lastLogin and create activity entries
-      // In the future, this can be replaced with actual activity tracking API
-      const activities = []
-      
-      if (user.lastLogin) {
-        activities.push({
-          id: '1',
-          loginTime: new Date(user.lastLogin),
-          pages: ['Dashboard', 'Orders', 'Calendar'], // Placeholder - can be replaced with actual tracking
-          duration: '2h 15m' // Placeholder
-        })
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (activityDateFilter) {
+        params.append('date', activityDateFilter)
       }
       
-      // Sort by date (newest first)
-      activities.sort((a, b) => new Date(b.loginTime) - new Date(a.loginTime))
+      const url = `${getApiUrl()}/api/user-activity/user/${user._id}${params.toString() ? `?${params.toString()}` : ''}`
       
-      setUserActivity(activities)
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setUserActivity(data.data || [])
+      } else {
+        setErrorMessage(data.message || 'Error loading user activity')
+        setShowErrorPopup(true)
+        setUserActivity([])
+      }
     } catch (error) {
       console.error('Error loading user activity:', error)
-      setErrorMessage('Error loading user activity')
+      setErrorMessage('Error loading user activity: ' + (error.message || 'Unknown error'))
       setShowErrorPopup(true)
+      setUserActivity([])
     } finally {
       setLoadingActivity(false)
     }
   }
 
   const filterActivityByDate = () => {
-    if (!activityDateFilter) {
-      return userActivity
-    }
-    
-    const filterDate = new Date(activityDateFilter)
-    filterDate.setHours(0, 0, 0, 0)
-    const nextDay = new Date(filterDate)
-    nextDay.setDate(nextDay.getDate() + 1)
-    
-    return userActivity.filter(activity => {
-      const activityDate = new Date(activity.loginTime)
-      activityDate.setHours(0, 0, 0, 0)
-      return activityDate >= filterDate && activityDate < nextDay
-    })
+    // If date filter is set, reload data with filter
+    // Otherwise return current activity
+    return userActivity
   }
+
+  // Reload activity when date filter changes
+  useEffect(() => {
+    if (showActivityModal && selectedActivityUser) {
+      const loadActivityWithFilter = async () => {
+        setLoadingActivity(true)
+        try {
+          const params = new URLSearchParams()
+          if (activityDateFilter) {
+            params.append('date', activityDateFilter)
+          }
+          
+          const url = `${getApiUrl()}/api/user-activity/user/${selectedActivityUser._id}${params.toString() ? `?${params.toString()}` : ''}`
+          
+          const response = await fetch(url, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          const data = await response.json()
+          
+          if (data.success) {
+            setUserActivity(data.data || [])
+          } else {
+            setUserActivity([])
+          }
+        } catch (error) {
+          console.error('Error loading user activity:', error)
+          setUserActivity([])
+        } finally {
+          setLoadingActivity(false)
+        }
+      }
+      
+      loadActivityWithFilter()
+    }
+  }, [activityDateFilter, showActivityModal, selectedActivityUser, token])
 
   const openEditModal = (user) => {
     setSelectedUser(user)

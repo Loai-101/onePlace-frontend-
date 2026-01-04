@@ -1408,28 +1408,49 @@ function Products() {
                     {(() => {
                       const selectedCategory = categories.find(cat => cat._id === productFormData.category)
                       const isBrandAutoSet = selectedCategory && selectedCategory.brand
+                      const isDisabled = isBrandAutoSet || !productFormData.mainCategory
                       return (
                         <>
                           <select
                             value={productFormData.brand}
                             onChange={(e) => setProductFormData({...productFormData, brand: e.target.value})}
                             required
-                            disabled={isBrandAutoSet}
-                            style={isBrandAutoSet ? { 
+                            disabled={isDisabled}
+                            style={isDisabled ? { 
                               backgroundColor: '#f5f5f5', 
                               cursor: 'not-allowed' 
                             } : {}}
                           >
-                            <option value="">Select a brand</option>
-                            {brands.map(brand => (
-                              <option key={brand._id} value={brand._id}>
-                                {brand.name}
-                              </option>
-                            ))}
+                            <option value="">
+                              {!productFormData.mainCategory 
+                                ? 'Select main category first' 
+                                : isBrandAutoSet 
+                                  ? 'Auto-set from category' 
+                                  : 'Select a brand'}
+                            </option>
+                            {brands
+                              .filter(brand => {
+                                // Filter by main category if selected
+                                if (productFormData.mainCategory && brand.mainCategory) {
+                                  return brand.mainCategory === productFormData.mainCategory
+                                }
+                                // If no main category selected, show all brands
+                                return true
+                              })
+                              .map(brand => (
+                                <option key={brand._id} value={brand._id}>
+                                  {brand.name}
+                                </option>
+                              ))}
                           </select>
                           {isBrandAutoSet && (
                             <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
                               Brand is automatically set based on selected category
+                            </small>
+                          )}
+                          {!productFormData.mainCategory && (
+                            <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                              Please select a main category first
                             </small>
                           )}
                         </>

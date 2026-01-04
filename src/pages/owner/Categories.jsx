@@ -161,8 +161,8 @@ function Categories() {
   const handleCreateCategory = async (e) => {
     e.preventDefault()
     
-    // Validate that at least one brand is selected
-    if (formData.brands.length === 0) {
+    // Validate that at least one brand is selected (check both old single brand and new brands array)
+    if (formData.brands.length === 0 && !formData.brand) {
       setErrorMessage('Please select at least one brand')
       setShowErrorPopup(true)
       return
@@ -1105,20 +1105,70 @@ function Categories() {
               </div>
               <div className="form-grid">
                 <div className="form-group full-width">
-                  <label>Brand *</label>
-                  <select
-                    value={formData.brand}
-                    onChange={(e) => setFormData({...formData, brand: e.target.value})}
-                    required
-                    className="form-select"
-                  >
-                    <option value="">Select a brand</option>
-                    {brands.map(brand => (
-                      <option key={brand._id} value={brand._id}>
-                        {brand.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label>Brands * (Select multiple)</label>
+                  <div className="brands-multiselect-container">
+                    <div className="brands-selected-list">
+                      {formData.brands.map(brandId => {
+                        const brand = brands.find(b => b._id === brandId)
+                        if (!brand) return null
+                        return (
+                          <span key={brandId} className="selected-brand-tag">
+                            {brand.logo?.url && (
+                              <img src={brand.logo.url} alt={brand.name} className="selected-brand-logo" />
+                            )}
+                            <span>{brand.name}</span>
+                            <button
+                              type="button"
+                              className="remove-brand-btn"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  brands: formData.brands.filter(id => id !== brandId)
+                                })
+                              }}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        )
+                      })}
+                    </div>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const selectedBrandId = e.target.value
+                        if (selectedBrandId && !formData.brands.includes(selectedBrandId)) {
+                          setFormData({
+                            ...formData,
+                            brands: [...formData.brands, selectedBrandId]
+                          })
+                        }
+                        e.target.value = '' // Reset select
+                      }}
+                      className="form-select brands-select"
+                    >
+                      <option value="">Add a brand...</option>
+                      {brands
+                        .filter(brand => {
+                          // Filter out already selected brands
+                          if (formData.brands.includes(brand._id)) return false
+                          // If main category is selected, filter brands by main category
+                          if (formData.mainCategory && brand.mainCategory) {
+                            return brand.mainCategory === formData.mainCategory
+                          }
+                          // If no main category selected, show all brands
+                          return true
+                        })
+                        .map(brand => (
+                          <option key={brand._id} value={brand._id}>
+                            {brand.name}
+                          </option>
+                        ))}
+                    </select>
+                    {formData.brands.length === 0 && (
+                      <span className="brands-required-hint">At least one brand is required</span>
+                    )}
+                  </div>
                 </div>
                 <div className="form-group full-width">
                   <label>Category Name *</label>
@@ -1273,7 +1323,16 @@ function Categories() {
                     >
                       <option value="">Add a brand...</option>
                       {brands
-                        .filter(brand => !formData.brands.includes(brand._id))
+                        .filter(brand => {
+                          // Filter out already selected brands
+                          if (formData.brands.includes(brand._id)) return false
+                          // If main category is selected, filter brands by main category
+                          if (formData.mainCategory && brand.mainCategory) {
+                            return brand.mainCategory === formData.mainCategory
+                          }
+                          // If no main category selected, show all brands
+                          return true
+                        })
                         .map(brand => (
                           <option key={brand._id} value={brand._id}>
                             {brand.name}
