@@ -725,6 +725,7 @@ function OwnerDashboard() {
             <option value="it-solutions">IT Solutions</option>
             <option value="pharmacy">Pharmacy</option>
             <option value="salon">Salon</option>
+            <option value="order-product">Order Product</option>
           </select>
         </div>
       </div>

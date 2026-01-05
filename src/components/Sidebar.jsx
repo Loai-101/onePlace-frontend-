@@ -216,6 +216,14 @@ function Sidebar({ isOpen, setIsOpen }) {
             </Link>
           </li>
           <li>
+            <Link 
+              to="/dashboard/owner/marketing" 
+              className={location.pathname === '/dashboard/owner/marketing' ? 'active' : ''}
+            >
+              Marketing
+            </Link>
+          </li>
+          <li>
             <a 
               href="https://mws.pmi-me.net/" 
               target="_blank" 

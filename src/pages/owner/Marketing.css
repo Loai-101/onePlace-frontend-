@@ -1,0 +1,273 @@
+/* Marketing Page Styles - Matching other owner pages */
+.marketing-page {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.marketing-count-badge {
+  background: linear-gradient(90deg, #0066cc 0%, #0052a3 50%, #003d7a 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Marketing Stats Grid - Matching Owner Dashboard style */
+.marketing-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.marketing-stat-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.marketing-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.marketing-stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.marketing-stat-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.marketing-stat-card-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.marketing-stat-card-change {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+
+/* Account Type Breakdown Table */
+.account-type-table-container {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.account-type-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.account-type-table thead {
+  background: #f8f9fa;
+}
+
+.account-type-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.account-type-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+.account-type-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.account-type-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.account-type-table td {
+  padding: 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.account-type-table td:first-child {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Toolbar - Matching other pages */
+.marketing-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.marketing-toolbar-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 300px;
+}
+
+.search-input:focus {
+  border-color: #0066cc;
+}
+
+/* Staff Table */
+.staff-table-container {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+
+.staff-table thead {
+  background: #f8f9fa;
+}
+
+.staff-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.staff-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+.staff-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.staff-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.staff-table td {
+  padding: 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.staff-table td:first-child {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+  font-size: 16px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .marketing-page {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .marketing-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .account-type-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .marketing-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .marketing-toolbar-left {
+    width: 100%;
+  }
+
+  .filters {
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .staff-table-container {
+    overflow-x: auto;
+  }
+}

@@ -567,11 +567,12 @@ function Catalog() {
             <option value="it-solutions">IT Solutions</option>
             <option value="pharmacy">Pharmacy</option>
             <option value="salon">Salon</option>
+            <option value="order-product">Order Product</option>
           </select>
           <div style={{ marginLeft: 'auto', fontSize: '0.9rem', color: '#666' }}>
             {selectedMainCategory !== 'all' && (
               <span>
-                Showing: <strong>{selectedMainCategory === 'medical' ? 'Medical' : selectedMainCategory === 'it-solutions' ? 'IT Solutions' : selectedMainCategory === 'pharmacy' ? 'Pharmacy' : 'Salon'}</strong> - 
+                Showing: <strong>{selectedMainCategory === 'medical' ? 'Medical' : selectedMainCategory === 'it-solutions' ? 'IT Solutions' : selectedMainCategory === 'pharmacy' ? 'Pharmacy' : selectedMainCategory === 'salon' ? 'Salon' : selectedMainCategory === 'order-product' ? 'Order Product' : 'All'}</strong> - 
                 Products: {filteredProducts.length} | 
                 Categories: {categories.filter(c => c.name !== 'All').length} | 
                 Brands: {brands.filter(b => b.name !== 'All').length}

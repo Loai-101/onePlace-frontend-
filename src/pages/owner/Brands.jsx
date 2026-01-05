@@ -640,6 +640,7 @@ function Brands() {
               <option value="it-solutions">IT Solutions</option>
               <option value="pharmacy">Pharmacy</option>
               <option value="salon">Salon</option>
+              <option value="order-product">Order Product</option>
             </select>
             <label className="filter-toggle">
               <input
@@ -760,6 +761,7 @@ function Brands() {
                     <option value="it-solutions">IT Solutions</option>
                     <option value="pharmacy">Pharmacy</option>
                     <option value="salon">Salon</option>
+                    <option value="order-product">Order Product</option>
                   </select>
                 </div>
                 <div className="form-group full-width">
@@ -891,6 +893,7 @@ function Brands() {
                     <option value="it-solutions">IT Solutions</option>
                     <option value="pharmacy">Pharmacy</option>
                     <option value="salon">Salon</option>
+                    <option value="order-product">Order Product</option>
                   </select>
                 </div>
                 <div className="form-group full-width">
@@ -1084,6 +1087,7 @@ function Brands() {
                   <option value="it-solutions">IT Solutions</option>
                   <option value="pharmacy">Pharmacy</option>
                   <option value="salon">Salon</option>
+                  <option value="order-product">Order Product</option>
                 </select>
                 <small style={{ display: 'block', color: '#666', fontSize: '11px', lineHeight: '1.3', textAlign: 'center' }}>
                   If Main Category is not specified in the Excel file, this value will be used for all brands
@@ -1110,9 +1114,9 @@ function Brands() {
                 <h3 style={{ marginTop: '0', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#333', textAlign: 'center' }}>Instructions:</h3>
                 <ul className="instructions-list" style={{ margin: '0', paddingLeft: '18px', lineHeight: '1.5', fontSize: '12px', color: '#555' }}>
                   <li style={{ marginBottom: '4px' }}>Download the template file to see the required format</li>
-                  <li style={{ marginBottom: '4px' }}>Required columns: <strong>Brand Name</strong>, <strong>Main Category</strong> (medical/it-solutions/pharmacy/salon)</li>
+                  <li style={{ marginBottom: '4px' }}>Required columns: <strong>Brand Name</strong>, <strong>Main Category</strong> (medical/it-solutions/pharmacy/salon/order-product)</li>
                   <li style={{ marginBottom: '4px' }}>Optional columns: <strong>Description</strong>, <strong>Brand Color</strong> (hex code), <strong>Is Active</strong> (true/false), <strong>Logo URL</strong></li>
-                  <li style={{ marginBottom: '4px' }}>Main Category must be one of: <strong>medical</strong>, <strong>it-solutions</strong>, <strong>pharmacy</strong>, or <strong>salon</strong></li>
+                  <li style={{ marginBottom: '4px' }}>Main Category must be one of: <strong>medical</strong>, <strong>it-solutions</strong>, <strong>pharmacy</strong>, <strong>salon</strong>, or <strong>order-product</strong></li>
                   <li style={{ marginBottom: '0' }}>Maximum file size: 10MB</li>
                 </ul>
               </div>

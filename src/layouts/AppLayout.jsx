@@ -32,6 +32,7 @@ function AppLayout() {
       '/dashboard/owner/calendar': 'Calendar',
       '/dashboard/owner/reports': 'Reports',
       '/dashboard/owner/settings': 'Settings',
+      '/dashboard/owner/marketing': 'Marketing',
       '/dashboard/calendar': 'Calendar',
       '/dashboard/clinics': 'Clinics'
     }

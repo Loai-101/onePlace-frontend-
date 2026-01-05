@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -44,6 +44,7 @@ function CompanySignup() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [showVerification, setShowVerification] = useState(false)
+  const popupTimerRef = useRef(null)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -180,6 +181,22 @@ function CompanySignup() {
     navigate('/login')
   }
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current)
+      }
+    }
+  }, [])
+
+  // Debug: Log when showSuccessPopup changes
+  useEffect(() => {
+    if (showSuccessPopup) {
+      console.log('🎉 Success popup state is now TRUE - popup should be visible')
+    }
+  }, [showSuccessPopup])
+
   const validateForm = () => {
     const newErrors = {}
 
@@ -306,17 +323,30 @@ function CompanySignup() {
         const result = await registerCompany(formData)
         
         if (result.success) {
-          // Show verification animation first
+          console.log('✅ Registration successful, showing success popup')
           setIsLoading(false)
+          // Show verification animation briefly, then success popup
           setShowVerification(true)
+          
+          // Clear any existing timer
+          if (popupTimerRef.current) {
+            clearTimeout(popupTimerRef.current)
+          }
+          
+          // Set timeout to show success popup after verification animation
+          popupTimerRef.current = setTimeout(() => {
+            console.log('📢 Showing success popup')
+            setShowVerification(false)
+            setShowSuccessPopup(true)
+          }, 2000) // Show popup after 2 seconds
         } else {
-          setErrors({ general: result.error })
+          setIsLoading(false)
+          setErrors({ general: result.error || 'Registration failed. Please try again.' })
         }
       } catch (error) {
         console.error('Registration error:', error)
-        setErrors({ general: 'Network error. Please check your connection and try again.' })
-      } finally {
         setIsLoading(false)
+        setErrors({ general: 'Network error. Please check your connection and try again.' })
       }
     } else {
       // For other steps, just validate and move to next step
@@ -330,10 +360,15 @@ function CompanySignup() {
       {showVerification && (
         <VerificationAnimation
           message="Verifying registration..."
-          duration={2500}
+          duration={2000}
           onComplete={() => {
+            console.log('✅ Verification animation completed, showing success popup')
             setShowVerification(false)
-            setShowSuccessPopup(true)
+            // Use setTimeout to ensure state update happens
+            setTimeout(() => {
+              console.log('📢 Setting showSuccessPopup to true')
+              setShowSuccessPopup(true)
+            }, 100)
           }}
         />
       )}
@@ -739,8 +774,22 @@ function CompanySignup() {
 
       {/* Success Popup Modal */}
       {showSuccessPopup && (
-        <div className="success-popup-overlay">
-          <div className="success-popup">
+        <div 
+          className="success-popup-overlay" 
+          onClick={handleSuccessPopupClose}
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div className="success-popup" onClick={(e) => e.stopPropagation()}>
             <div className="success-popup-header">
               <div className="success-icon">✓</div>
               <h3>Registration Successful!</h3>
