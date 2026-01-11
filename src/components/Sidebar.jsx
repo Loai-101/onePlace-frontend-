@@ -5,8 +5,16 @@ import { usePopupFocus } from '../hooks/usePopupFocus'
 
 function Sidebar({ isOpen, setIsOpen }) {
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, companyModules } = useAuth()
   const [showSupportModal, setShowSupportModal] = useState(false)
+  
+  // Helper function to check if a module is enabled
+  const isModuleEnabled = (moduleName) => {
+    // If modules are not loaded yet, default to true (show all)
+    if (!companyModules) return true
+    // If module is explicitly set to false, hide it
+    return companyModules[moduleName] !== false
+  }
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen)
@@ -45,64 +53,74 @@ function Sidebar({ isOpen, setIsOpen }) {
         {userRole === 'salesman' && (
       <div className="sidebar-section">
         <ul>
+          {isModuleEnabled('dashboard') && (
+            <li>
+              <Link 
+                to="/dashboard/salesman" 
+                className={location.pathname === '/dashboard/salesman' ? 'active' : ''}
+              >
+                Dashboard
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('menu') && (
+            <li>
+              <Link 
+                to="/dashboard/catalog" 
+                className={location.pathname === '/dashboard/catalog' || location.pathname === '/dashboard' ? 'active' : ''}
+              >
+                Menu
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('menu') && (
+            <li>
+              <Link 
+                to="/dashboard/cart" 
+                className={location.pathname === '/dashboard/cart' ? 'active' : ''}
+              >
+                Cart
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('menu') && (
+            <li>
+              <Link 
+                to="/dashboard/orders" 
+                className={location.pathname.startsWith('/dashboard/orders') && !location.pathname.startsWith('/dashboard/accountant/orders') ? 'active' : ''}
+              >
+                My Orders
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('calendar') && (
+            <li>
+              <Link 
+                to="/dashboard/calendar" 
+                className={location.pathname === '/dashboard/calendar' ? 'active' : ''}
+              >
+                Calendar
+              </Link>
+            </li>
+          )}
           <li>
-            <Link 
-              to="/dashboard/salesman" 
-              className={location.pathname === '/dashboard/salesman' ? 'active' : ''}
+            <a 
+              href="https://mws.pmi-me.net/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="external-link"
             >
-              Dashboard
-            </Link>
+              DA
+            </a>
           </li>
           <li>
-            <Link 
-              to="/dashboard/catalog" 
-              className={location.pathname === '/dashboard/catalog' || location.pathname === '/dashboard' ? 'active' : ''}
+            <button 
+              onClick={() => setShowSupportModal(true)}
+              className="support-link"
             >
-              Menu
-            </Link>
+              Support
+            </button>
           </li>
-          <li>
-            <Link 
-              to="/dashboard/cart" 
-              className={location.pathname === '/dashboard/cart' ? 'active' : ''}
-            >
-              Cart
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/orders" 
-              className={location.pathname.startsWith('/dashboard/orders') && !location.pathname.startsWith('/dashboard/accountant/orders') ? 'active' : ''}
-            >
-              My Orders
-            </Link>
-          </li>
-              <li>
-                <Link 
-                  to="/dashboard/calendar" 
-                  className={location.pathname === '/dashboard/calendar' ? 'active' : ''}
-                >
-                  Calendar
-                </Link>
-              </li>
-              <li>
-                <a 
-                  href="https://mws.pmi-me.net/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="external-link"
-                >
-                  DA
-                </a>
-              </li>
-              <li>
-                <button 
-                  onClick={() => setShowSupportModal(true)}
-                  className="support-link"
-                >
-                  Support
-                </button>
-              </li>
         </ul>
       </div>
         )}
@@ -111,22 +129,26 @@ function Sidebar({ isOpen, setIsOpen }) {
         {userRole === 'accountant' && (
       <div className="sidebar-section">
         <ul>
-          <li>
-            <Link 
-              to="/dashboard/accountant" 
-              className={location.pathname === '/dashboard/accountant' ? 'active' : ''}
-            >
-              Dashboard
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/accountant/orders" 
-              className={location.pathname.startsWith('/dashboard/accountant/orders') ? 'active' : ''}
-            >
-              Orders
-            </Link>
-          </li>
+          {isModuleEnabled('dashboard') && (
+            <li>
+              <Link 
+                to="/dashboard/accountant" 
+                className={location.pathname === '/dashboard/accountant' ? 'active' : ''}
+              >
+                Dashboard
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('accounts') && (
+            <li>
+              <Link 
+                to="/dashboard/accountant/orders" 
+                className={location.pathname.startsWith('/dashboard/accountant/orders') ? 'active' : ''}
+              >
+                Orders
+              </Link>
+            </li>
+          )}
           <li>
             <button 
               onClick={() => setShowSupportModal(true)}
@@ -143,86 +165,106 @@ function Sidebar({ isOpen, setIsOpen }) {
         {(userRole === 'owner' || userRole === 'admin') && (
       <div className="sidebar-section">
         <ul>
-          <li>
-            <Link 
-              to="/dashboard/owner" 
-              className={location.pathname === '/dashboard/owner' ? 'active' : ''}
-            >
-              Dashboard
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/catalog" 
-              className={location.pathname === '/dashboard/catalog' ? 'active' : ''}
-            >
-              Menu
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/products" 
-              className={location.pathname.startsWith('/dashboard/owner/products') ? 'active' : ''}
-            >
-              Products
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/categories" 
-              className={location.pathname === '/dashboard/owner/categories' ? 'active' : ''}
-            >
-              Categories
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/brands" 
-              className={location.pathname === '/dashboard/owner/brands' ? 'active' : ''}
-            >
-              Brands
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/users" 
-              className={location.pathname === '/dashboard/owner/users' ? 'active' : ''}
-            >
-              Users
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/accounts" 
-              className={location.pathname.startsWith('/dashboard/owner/accounts') ? 'active' : ''}
-            >
-              Accounts
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/calendar" 
-              className={location.pathname === '/dashboard/owner/calendar' ? 'active' : ''}
-            >
-              Calendar
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/reports" 
-              className={location.pathname === '/dashboard/owner/reports' ? 'active' : ''}
-            >
-              Reports
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/marketing" 
-              className={location.pathname === '/dashboard/owner/marketing' ? 'active' : ''}
-            >
-              Marketing
-            </Link>
-          </li>
+          {isModuleEnabled('dashboard') && (
+            <li>
+              <Link 
+                to="/dashboard/owner" 
+                className={location.pathname === '/dashboard/owner' ? 'active' : ''}
+              >
+                Dashboard
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('menu') && (
+            <li>
+              <Link 
+                to="/dashboard/catalog" 
+                className={location.pathname === '/dashboard/catalog' ? 'active' : ''}
+              >
+                Menu
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('products') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/products" 
+                className={location.pathname.startsWith('/dashboard/owner/products') ? 'active' : ''}
+              >
+                Products
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('categories') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/categories" 
+                className={location.pathname === '/dashboard/owner/categories' ? 'active' : ''}
+              >
+                Categories
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('brands') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/brands" 
+                className={location.pathname === '/dashboard/owner/brands' ? 'active' : ''}
+              >
+                Brands
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('users') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/users" 
+                className={location.pathname === '/dashboard/owner/users' ? 'active' : ''}
+              >
+                Users
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('accounts') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/accounts" 
+                className={location.pathname.startsWith('/dashboard/owner/accounts') ? 'active' : ''}
+              >
+                Accounts
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('calendar') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/calendar" 
+                className={location.pathname === '/dashboard/owner/calendar' ? 'active' : ''}
+              >
+                Calendar
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('reports') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/reports" 
+                className={location.pathname === '/dashboard/owner/reports' ? 'active' : ''}
+              >
+                Reports
+              </Link>
+            </li>
+          )}
+          {isModuleEnabled('marketing') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/marketing" 
+                className={location.pathname === '/dashboard/owner/marketing' ? 'active' : ''}
+              >
+                Marketing
+              </Link>
+            </li>
+          )}
           <li>
             <a 
               href="https://mws.pmi-me.net/" 
@@ -233,14 +275,16 @@ function Sidebar({ isOpen, setIsOpen }) {
               DA
             </a>
           </li>
-          <li>
-            <Link 
-              to="/dashboard/owner/settings" 
-              className={location.pathname === '/dashboard/owner/settings' ? 'active' : ''}
-            >
-              Settings
-            </Link>
-          </li>
+          {isModuleEnabled('settings') && (
+            <li>
+              <Link 
+                to="/dashboard/owner/settings" 
+                className={location.pathname === '/dashboard/owner/settings' ? 'active' : ''}
+              >
+                Settings
+              </Link>
+            </li>
+          )}
           <li>
             <button 
               onClick={() => setShowSupportModal(true)}

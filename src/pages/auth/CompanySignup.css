@@ -468,18 +468,26 @@
   z-index: 10000;
   animation: fadeIn 0.3s ease-out;
   backdrop-filter: blur(5px);
+  padding: 20px;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 .success-popup {
   background: white;
   border-radius: 20px;
   padding: 40px;
-  max-width: 500px;
-  width: 90%;
+  max-width: 550px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   text-align: center;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
   animation: slideInUp 0.3s ease-out;
   border: 1px solid rgba(59, 130, 246, 0.1);
+  box-sizing: border-box;
+  position: relative;
+  margin: auto;
 }
 
 .success-popup-header {
@@ -500,6 +508,7 @@
   margin: 0 auto 20px;
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
   animation: bounce 0.6s ease-out;
+  flex-shrink: 0;
 }
 
 .success-popup-header h3 {
@@ -512,20 +521,49 @@
 
 .success-popup-content {
   margin-bottom: 30px;
+  text-align: left;
 }
 
 .success-popup-content p {
+  margin: 12px 0;
+  line-height: 1.6;
+}
+
+.success-message-main {
+  color: #1e40af;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 20px !important;
+}
+
+.success-message-main strong {
+  color: #1e40af;
+  font-weight: 700;
+}
+
+.success-message-text {
   color: #64748b;
   font-size: 16px;
-  margin: 10px 0;
   font-weight: 500;
-  line-height: 1.5;
+  text-align: center;
+}
+
+.success-message-email {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 20px !important;
+  padding-top: 15px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .success-popup-actions {
   display: flex;
   justify-content: center;
   gap: 15px;
+  margin-top: 20px;
 }
 
 /* Animations */
@@ -563,23 +601,37 @@
 
 /* Responsive Success Popup */
 @media (max-width: 768px) {
+  .success-popup-overlay {
+    padding: 10px;
+  }
+  
   .success-popup {
     padding: 30px 20px;
-    margin: 20px;
+    max-width: 100%;
+    border-radius: 15px;
   }
   
   .success-icon {
     width: 60px;
     height: 60px;
     font-size: 30px;
+    margin-bottom: 15px;
   }
   
   .success-popup-header h3 {
     font-size: 20px;
   }
   
-  .success-popup-content p {
+  .success-message-main {
+    font-size: 16px;
+  }
+  
+  .success-message-text {
     font-size: 14px;
+  }
+  
+  .success-message-email {
+    font-size: 13px;
   }
   
   .success-popup-actions {
@@ -588,5 +640,33 @@
   
   .success-popup-actions button {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .success-popup {
+    padding: 25px 15px;
+  }
+  
+  .success-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+  
+  .success-popup-header h3 {
+    font-size: 18px;
+  }
+  
+  .success-message-main {
+    font-size: 15px;
+  }
+  
+  .success-message-text {
+    font-size: 13px;
+  }
+  
+  .success-message-email {
+    font-size: 12px;
   }
 }

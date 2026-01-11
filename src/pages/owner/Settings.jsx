@@ -477,6 +477,7 @@ function Settings() {
               >
                 <option value="">Select company type</option>
                 <option value="llc">LLC</option>
+                <option value="wll">WLL</option>
                 <option value="corporation">Corporation</option>
                 <option value="partnership">Partnership</option>
                 <option value="sole-proprietorship">Sole Proprietorship</option>
@@ -516,6 +517,8 @@ function Settings() {
                 <option value="medical-items">Medical Items</option>
                 <option value="pharmacy">Pharmacy</option>
                 <option value="collecting-orders">Collecting Orders</option>
+                <option value="salon">Salon</option>
+                <option value="all">All</option>
                 <option value="other">Other</option>
               </select>
             </div>

@@ -49,6 +49,8 @@ function Accounts() {
   })
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [showErrorPopup, setShowErrorPopup] = useState(false)
   const [showConfirmPopup, setShowConfirmPopup] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)
   const [confirmMessage, setConfirmMessage] = useState('')
@@ -64,6 +66,8 @@ function Accounts() {
   usePopupFocus(showEditModal, '.modal-content')
   usePopupFocus(showViewModal, '.modal-content')
   usePopupFocus(showImportModal, '.modal-content')
+  usePopupFocus(showSuccessPopup)
+  usePopupFocus(showErrorPopup)
   usePopupFocus(showConfirmPopup)
 
   useEffect(() => {
@@ -430,14 +434,13 @@ function Accounts() {
       const data = await response.json()
 
       if (data.success) {
-        setSuccessMessage(selectedAccount ? 'Account updated successfully' : 'Account created successfully')
-        setTimeout(() => {
-          setShowCreateModal(false)
-          setShowEditModal(false)
-          setSelectedAccount(null)
-          resetForm()
-          loadAccounts()
-        }, 1500)
+        setSuccessMessage(selectedAccount ? 'Account updated successfully!' : 'Account created successfully!')
+        setShowCreateModal(false)
+        setShowEditModal(false)
+        setSelectedAccount(null)
+        resetForm()
+        loadAccounts()
+        setShowSuccessPopup(true)
       } else {
         // Show detailed error messages
         let errorMsg = data.message || 'Error saving account'
@@ -445,12 +448,14 @@ function Accounts() {
           errorMsg += ': ' + data.errors.join(', ')
         }
         setErrorMessage(errorMsg)
+        setShowErrorPopup(true)
         console.error('Account save error:', data)
       }
     } catch (error) {
       console.error('Error saving account:', error)
-      const errorMessage = error.message || 'Error saving account'
-      setErrorMessage(errorMessage)
+      const errorMsg = error.message || 'Error saving account. Please try again.'
+      setErrorMessage(errorMsg)
+      setShowErrorPopup(true)
     }
   }
 
@@ -1486,6 +1491,34 @@ function Accounts() {
                 </SecondaryButton>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="modal-overlay" onClick={() => setShowSuccessPopup(false)}>
+          <div className="success-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="success-icon">✓</div>
+            <h3>Success!</h3>
+            <p>{successMessage}</p>
+            <PrimaryButton onClick={() => setShowSuccessPopup(false)}>
+              OK
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
+
+      {/* Error Popup */}
+      {showErrorPopup && (
+        <div className="modal-overlay" onClick={() => setShowErrorPopup(false)}>
+          <div className="error-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="error-icon">✗</div>
+            <h3>Error!</h3>
+            <p>{errorMessage}</p>
+            <PrimaryButton onClick={() => setShowErrorPopup(false)}>
+              OK
+            </PrimaryButton>
           </div>
         </div>
       )}

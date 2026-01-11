@@ -10,7 +10,7 @@ import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Reports.css'
 
 function Reports() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [reports, setReports] = useState([])
   const [filteredReports, setFilteredReports] = useState([])
   const [loading, setLoading] = useState(true)
@@ -66,19 +66,26 @@ function Reports() {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/users?limit=100`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      // Use company-specific endpoint to ensure only company users are loaded
+      if (user?.company) {
+        const companyId = typeof user.company === 'object' 
+          ? user.company._id || user.company 
+          : user.company
+        
+        const response = await fetch(`${getApiUrl()}/api/users/company/${companyId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
 
-      const data = await response.json()
-      
-      if (data.success) {
-        // Filter only salesmen
-        const salesmen = (data.data || []).filter(user => user.role === 'salesman')
-        setUsers(salesmen)
+        const data = await response.json()
+        
+        if (data.success) {
+          // Filter only salesmen from the company
+          const salesmen = (data.data || []).filter(user => user.role === 'salesman')
+          setUsers(salesmen)
+        }
       }
     } catch (error) {
       console.error('Error loading users:', error)

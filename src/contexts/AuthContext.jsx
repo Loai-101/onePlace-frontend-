@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [companyModules, setCompanyModules] = useState(null)
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -53,6 +54,9 @@ export const AuthProvider = ({ children }) => {
                   }
                   setUser(updatedUser)
                   localStorage.setItem('user', JSON.stringify(updatedUser))
+                  
+                  // Fetch company modules
+                  await fetchCompanyModules(storedToken)
                   return
                 }
               }
@@ -62,6 +66,11 @@ export const AuthProvider = ({ children }) => {
           }
           
           setUser(parsedUser)
+          
+          // Fetch company modules if user has a company
+          if (parsedUser.company) {
+            await fetchCompanyModules(storedToken)
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
@@ -97,6 +106,12 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user)
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
+        
+        // Fetch company modules if user has a company
+        if (data.user && data.user.company) {
+          await fetchCompanyModules(data.token)
+        }
+        
         return { success: true, data }
       } else {
         // Return error with additional data for better error handling
@@ -265,6 +280,7 @@ export const AuthProvider = ({ children }) => {
       // Clear local state regardless of API call result
       setToken(null)
       setUser(null)
+      setCompanyModules(null)
       localStorage.removeItem('token')
       localStorage.removeItem('user')
     }
@@ -273,6 +289,29 @@ export const AuthProvider = ({ children }) => {
   const updateUser = (updatedUser) => {
     setUser(updatedUser)
     localStorage.setItem('user', JSON.stringify(updatedUser))
+  }
+
+  const fetchCompanyModules = async (authToken) => {
+    try {
+      const token = authToken || localStorage.getItem('token')
+      if (!token) return
+
+      const response = await fetch(`${getApiUrl()}/api/companies/me/modules`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data) {
+          setCompanyModules(data.data)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching company modules:', error)
+    }
   }
 
   const refreshUser = async () => {
@@ -292,6 +331,11 @@ export const AuthProvider = ({ children }) => {
         if (data.success && data.user) {
           setUser(data.user)
           localStorage.setItem('user', JSON.stringify(data.user))
+          
+          // Refresh company modules
+          if (data.user.company) {
+            await fetchCompanyModules(storedToken)
+          }
         }
       }
     } catch (error) {
@@ -317,12 +361,14 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     isLoading,
+    companyModules,
     login,
     register,
     registerCompany,
     logout,
     updateUser,
     refreshUser,
+    fetchCompanyModules,
     isAuthenticated,
     hasRole,
     hasPermission

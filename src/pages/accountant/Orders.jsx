@@ -103,7 +103,9 @@ function AccountantOrders() {
       const data = await response.json()
       
       if (data.success) {
-        setCompanyUsers(data.data || [])
+        // Filter to only show salesmen from the company
+        const salesmen = (data.data || []).filter(user => user.role === 'salesman')
+        setCompanyUsers(salesmen)
       }
     } catch (error) {
       console.error('Error loading company users:', error)

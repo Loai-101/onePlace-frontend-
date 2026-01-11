@@ -1,6 +1,21 @@
 /* Users Page Styles */
 .users-page {
   padding: 20px;
+  /* Prevent text selection on the entire page except input fields */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow text selection in input fields and text areas */
+.users-page input,
+.users-page textarea,
+.users-page select {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .page-header {
@@ -15,6 +30,10 @@
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .user-count-badge {
@@ -102,6 +121,13 @@
 
 .users-table tbody tr:hover {
   background: #f8f9fa;
+}
+
+.users-table tbody tr {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* User Info */
@@ -225,6 +251,10 @@
   border-radius: 6px;
   transition: all 0.2s;
   white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .btn-text:hover {
@@ -308,6 +338,10 @@
   padding: 0;
   width: 32px;
   height: 32px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .modal-close:hover {

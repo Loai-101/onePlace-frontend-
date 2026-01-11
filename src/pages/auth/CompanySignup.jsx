@@ -475,6 +475,7 @@ function CompanySignup() {
                   >
                     <option value="">Select company type</option>
                     <option value="llc">LLC</option>
+                    <option value="wll">WLL</option>
                     <option value="corporation">Corporation</option>
                     <option value="partnership">Partnership</option>
                     <option value="sole-proprietorship">Sole Proprietorship</option>
@@ -518,6 +519,8 @@ function CompanySignup() {
                     <option value="medical-items">Medical Items</option>
                     <option value="pharmacy">Pharmacy</option>
                     <option value="collecting-orders">Collecting Orders</option>
+                    <option value="salon">Salon</option>
+                    <option value="all">All</option>
                     <option value="other">Other</option>
                   </select>
                   {errors.businessTarget && <span className="field-error">{errors.businessTarget}</span>}
@@ -777,17 +780,6 @@ function CompanySignup() {
         <div 
           className="success-popup-overlay" 
           onClick={handleSuccessPopupClose}
-          style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            zIndex: 10000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
         >
           <div className="success-popup" onClick={(e) => e.stopPropagation()}>
             <div className="success-popup-header">
@@ -795,10 +787,16 @@ function CompanySignup() {
               <h3>Registration Successful!</h3>
             </div>
             <div className="success-popup-content">
-              <p><strong>Company registration submitted successfully!</strong></p>
-              <p>Your request is under review by our admin team.</p>
-              <p>You will receive an email notification once your company is approved.</p>
-              <p style={{marginTop: '15px', fontSize: '0.9em', color: '#666'}}>
+              <p className="success-message-main">
+                <strong>Company registration submitted successfully!</strong>
+              </p>
+              <p className="success-message-text">
+                Your request is under review by our admin team.
+              </p>
+              <p className="success-message-text">
+                You will receive an email notification once your company is approved.
+              </p>
+              <p className="success-message-email">
                 Please check your email ({formData.companyEmail}) for updates.
               </p>
             </div>
