@@ -32,3 +32,14 @@ dist-ssr
 
 # Vercel
 .vercel
+
+# Internal, sensitive, and infrastructure-related documentation
+DEPLOYMENT.md
+ENV_SETUP.md
+FIX_API_URLS.md
+src/components/LOADING_USAGE.md
+
+# Keep public documentation:
+# - README.md
+# - SECURITY.md
+# - SEO_SETUP.md
