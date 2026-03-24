@@ -27,11 +27,10 @@ function Reports() {
   usePopupFocus(showErrorPopup)
 
   useEffect(() => {
-    if (token) {
-      loadReports()
-      loadUsers()
-    }
-  }, [token])
+    if (!token) return
+    loadReports()
+    loadUsers()
+  }, [token, user])
 
   useEffect(() => {
     filterReports()
@@ -68,10 +67,14 @@ function Reports() {
     try {
       // Use company-specific endpoint to ensure only company users are loaded
       if (user?.company) {
-        const companyId = typeof user.company === 'object' 
-          ? user.company._id || user.company 
-          : user.company
-        
+        const rawCompanyId =
+          typeof user.company === 'object'
+            ? user.company._id ?? user.company
+            : user.company
+        const companyId = rawCompanyId != null ? String(rawCompanyId) : ''
+
+        if (!companyId) return
+
         const response = await fetch(`${getApiUrl()}/api/users/company/${companyId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -82,8 +85,7 @@ function Reports() {
         const data = await response.json()
         
         if (data.success) {
-          // Filter only salesmen from the company
-          const salesmen = (data.data || []).filter(user => user.role === 'salesman')
+          const salesmen = (data.data || []).filter((u) => u.role === 'salesman')
           setUsers(salesmen)
         }
       }
