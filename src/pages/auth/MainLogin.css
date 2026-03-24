@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: inherit;
   overflow: hidden;
 }
 
@@ -28,7 +28,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.3);
+  /* Minimal dim so the background image stays clearly visible */
+  background: rgba(0, 0, 0, 0.08);
   z-index: 2;
 }
 
@@ -41,13 +42,21 @@
 }
 
 .main-login-form {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  /* Very transparent glass — background stays visible; blur keeps UI readable */
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(28px) saturate(165%);
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
   padding: 50px 40px;
-  border-radius: 25px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.08) inset;
+  border: 1px solid rgba(255, 255, 255, 0.42);
   position: relative;
+  isolation: isolate;
+  animation: fadeInUp 0.8s ease-out;
+  transition: box-shadow 0.35s ease, border-color 0.35s ease, transform 0.35s ease;
 }
 
 .verification-inline-wrapper {
@@ -64,8 +73,15 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  height: 3px;
+  border-radius: 28px 28px 0 0;
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.85),
+    rgba(96, 165, 250, 0.75),
+    rgba(147, 197, 253, 0.65)
+  );
+  opacity: 0.95;
 }
 
 .main-login-header {
@@ -89,25 +105,37 @@
   margin: 0 auto;
 }
 
+/* Strong contrast + light halo so text stays crisp on any part of the photo */
 .main-login-header h1 {
   font-size: 32px;
-  font-weight: 700;
-  color: #1e40af;
+  font-weight: 800;
+  color: #030712;
   margin: 0;
-  text-shadow: 0 2px 4px rgba(30, 64, 175, 0.2);
+  letter-spacing: -0.02em;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 1),
+    0 0 14px rgba(255, 255, 255, 0.95),
+    0 1px 2px rgba(255, 255, 255, 0.9),
+    0 2px 20px rgba(255, 255, 255, 0.65);
 }
 
 .main-login-header p {
-  color: #64748b;
+  color: #0f172a;
   font-size: 16px;
   margin: 5px 0;
-  font-weight: 500;
+  font-weight: 600;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.92),
+    0 1px 2px rgba(255, 255, 255, 0.85);
 }
 
 .login-subtitle {
-  color: #94a3b8 !important;
+  color: #1e293b !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: 600 !important;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.9),
+    0 1px 1px rgba(255, 255, 255, 0.8) !important;
 }
 
 .form-group {
@@ -117,29 +145,39 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 600;
-  color: #374151;
+  font-weight: 700;
+  color: #030712;
   font-size: 14px;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.9),
+    0 1px 1px rgba(255, 255, 255, 0.85);
 }
 
 .form-group input {
   width: 100%;
   padding: 16px 20px;
-  border: 2px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 15px;
   font-size: 16px;
+  color: #030712;
   transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
+  /* Slightly frosted fields so typed text is always sharp */
+  background: rgba(255, 255, 255, 0.55);
   box-sizing: border-box;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+.form-group input::placeholder {
+  color: rgba(15, 23, 42, 0.45);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: white;
+  border-color: rgba(59, 130, 246, 0.75);
+  background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .form-group input.error {
@@ -185,39 +223,52 @@
   gap: 20px;
   margin-bottom: 30px;
   padding: 25px;
-  background: rgba(248, 250, 252, 0.8);
-  border-radius: 15px;
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .login-option {
   text-align: center;
   padding: 20px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   transition: all 0.3s ease;
   cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 .login-option:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.15);
-  border-color: #3b82f6;
+  box-shadow: 0 10px 28px rgba(30, 64, 175, 0.12);
+  border-color: rgba(59, 130, 246, 0.55);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .login-option h3 {
-  color: #1e40af;
+  color: #030712;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 800;
   margin: 0 0 8px 0;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(255, 255, 255, 0.85);
 }
 
 .login-option p {
-  color: #64748b;
+  color: #0f172a;
   font-size: 13px;
   margin: 0 0 15px 0;
-  font-weight: 400;
+  font-weight: 600;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.88),
+    0 1px 1px rgba(255, 255, 255, 0.75);
 }
 
 .option-link {
@@ -244,36 +295,46 @@
 .company-registration-section {
   margin-bottom: 30px;
   padding-bottom: 25px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .company-registration-card {
   text-align: center;
   padding: 25px;
-  background: rgba(248, 250, 252, 0.8);
-  border-radius: 15px;
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(155%);
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   transition: all 0.3s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .company-registration-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.15);
-  border-color: #3b82f6;
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .company-registration-card h3 {
-  color: #1e40af;
+  color: #030712;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 800;
   margin: 0 0 8px 0;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(255, 255, 255, 0.85);
 }
 
 .company-registration-card p {
-  color: #64748b;
+  color: #0f172a;
   font-size: 14px;
   margin: 0 0 20px 0;
-  font-weight: 400;
+  font-weight: 600;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.88),
+    0 1px 1px rgba(255, 255, 255, 0.75);
 }
 
 .registration-link {
@@ -298,9 +359,13 @@
 }
 
 .back-button {
-  background: rgba(107, 114, 128, 0.1);
-  border: 1px solid rgba(107, 114, 128, 0.2);
-  color: #6b7280;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #030712;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
   padding: 10px 20px;
   border-radius: 8px;
   font-size: 14px;
@@ -339,10 +404,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.main-login-form {
-  animation: fadeInUp 0.8s ease-out;
 }
 
 /* Responsive Design */
@@ -405,14 +466,13 @@
   outline-offset: 2px;
 }
 
-/* Hover Effects */
-.main-login-form {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
+/* Subtle hover — glass reads better without heavy lift */
 .main-login-form:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.1) inset;
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Background Animation - Removed gradient animation as we're using an image now */
@@ -433,12 +493,15 @@
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  border-radius: 16px;
   padding: 24px;
   max-width: 450px;
   width: 100%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   position: relative;
   animation: popupSlideIn 0.3s ease-out;
 }
@@ -524,12 +587,15 @@
 }
 
 .popup-content {
-  background: white;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  border-radius: 16px;
   padding: 24px;
   max-width: 400px;
   width: 100%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   position: relative;
   animation: popupSlideIn 0.3s ease-out;
 }
