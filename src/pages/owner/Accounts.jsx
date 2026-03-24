@@ -9,6 +9,74 @@ import { getApiUrl } from '../../utils/security'
 import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Accounts.css'
 
+/** Column order for import/export — must match Create New Account + bulk-import API */
+const ACCOUNT_IMPORT_COLUMN_ORDER = [
+  'Name',
+  'Phone Number',
+  'Email',
+  'Flat/Shop No.',
+  'Building',
+  'Road',
+  'Block',
+  'Area',
+  'VAT Number',
+  'CR Number',
+  'Credit Limit',
+  'Status',
+  'Staff 1 Title',
+  'Staff 1 Name',
+  'Staff 1 Phone',
+  'Staff 1 Email',
+  'Staff 1 Medical Branch',
+  'Staff 1 Specializations',
+  'Staff 2 Title',
+  'Staff 2 Name',
+  'Staff 2 Phone',
+  'Staff 2 Email',
+  'Staff 2 Medical Branch',
+  'Staff 2 Specializations',
+  'Staff 3 Title',
+  'Staff 3 Name',
+  'Staff 3 Phone',
+  'Staff 3 Email',
+  'Staff 3 Medical Branch',
+  'Staff 3 Specializations',
+  'Staff 4 Title',
+  'Staff 4 Name',
+  'Staff 4 Phone',
+  'Staff 4 Email',
+  'Staff 4 Medical Branch',
+  'Staff 4 Specializations',
+  'Staff 5 Title',
+  'Staff 5 Name',
+  'Staff 5 Phone',
+  'Staff 5 Email',
+  'Staff 5 Medical Branch',
+  'Staff 5 Specializations',
+  'Staff'
+]
+
+const ACCOUNT_IMPORT_EXAMPLE_ROW = {
+  Name: 'Example Clinic',
+  'Phone Number': '+973 12345678',
+  Email: 'clinic@example.com',
+  'Flat/Shop No.': '123',
+  Building: 'Building A',
+  Road: 'Main Street',
+  Block: 'Block 1',
+  Area: 'Manama',
+  'VAT Number': 'VAT123456',
+  'CR Number': 'CR789012',
+  'Credit Limit': '5000',
+  Status: 'active',
+  'Staff 1 Title': 'Dr',
+  'Staff 1 Name': 'Jane Doe',
+  'Staff 1 Phone': '+973 11111111',
+  'Staff 1 Email': 'jane@example.com',
+  'Staff 1 Medical Branch': 'dentistry',
+  'Staff 1 Specializations': 'General Dentistry, Orthodontics'
+}
+
 function Accounts() {
   const { token } = useAuth()
   const [accounts, setAccounts] = useState([])
@@ -566,33 +634,17 @@ function Accounts() {
   }
 
   const handleDownloadTemplate = () => {
-    // Create template data with all required fields
-    const templateData = [
-      {
-        'Name': 'Example Account',
-        'Phone Number': '+973 12345678',
-        'Area': 'Manama',
-        'Flat/Shop No.': '123',
-        'Building': 'Building A',
-        'Road': 'Main Street',
-        'Block': 'Block 1',
-        'VAT Number': 'VAT123456',
-        'CR Number': 'CR789012',
-        'Credit Limit': '5000',
-        'Status': 'active'
-      }
-    ]
+    const row = {}
+    ACCOUNT_IMPORT_COLUMN_ORDER.forEach((col) => {
+      row[col] = ACCOUNT_IMPORT_EXAMPLE_ROW[col] ?? ''
+    })
 
-    // Convert to CSV
-    const headers = Object.keys(templateData[0])
     const csvContent = [
-      headers.join(','),
-      ...templateData.map(row => 
-        headers.map(header => {
-          const value = row[header] || ''
-          return `"${value.toString().replace(/"/g, '""')}"`
-        }).join(',')
-      )
+      ACCOUNT_IMPORT_COLUMN_ORDER.join(','),
+      ACCOUNT_IMPORT_COLUMN_ORDER.map((header) => {
+        const value = row[header] ?? ''
+        return `"${String(value).replace(/"/g, '""')}"`
+      }).join(',')
     ].join('\n')
 
     // Create blob and download
@@ -653,49 +705,68 @@ function Accounts() {
     }
   }
 
+  const staffToLegacyPipe = (account) => {
+    if (!account.staff || !Array.isArray(account.staff) || account.staff.length === 0) return ''
+    return account.staff
+      .map((s) => {
+        const title = s.title || 'Dr'
+        const name = s.name || ''
+        const phone = s.phone || ''
+        const email = s.email || ''
+        const branch = s.medicalBranch || ''
+        const specs =
+          s.specializations && Array.isArray(s.specializations) ? s.specializations.join(',') : ''
+        return `${title}|${name}|${phone}|${email}|${branch}|${specs}`
+      })
+      .join(';')
+  }
+
   const handleDownloadAllAccounts = () => {
     if (accounts.length === 0) {
       setErrorMessage('No accounts to download')
       return
     }
 
-    // Convert accounts to CSV format
-    const headers = ['Name', 'Flat/Shop No.', 'Building', 'Road', 'Block', 'Area', 'Staff', 'VAT Number', 'CR Number', 'Credit Limit', 'Status']
-    
-    const csvData = accounts.map(account => {
-      // Format staff as: Title|Name|MedicalBranch|Specializations
-      const staffStr = (account.staff && Array.isArray(account.staff) && account.staff.length > 0)
-        ? account.staff.map(s => {
-            const title = s.title || 'Dr'
-            const name = s.name || ''
-            const branch = s.medicalBranch || ''
-            const specs = (s.specializations && Array.isArray(s.specializations)) ? s.specializations.join(', ') : ''
-            return `${title}|${name}|${branch}|${specs}`
-          }).join(';')
-        : ''
-      
-      return {
-        'Name': account.name || '',
-        'Flat/Shop No.': account.address?.flatShopNo || '',
-        'Building': account.address?.building || '',
-        'Road': account.address?.road || '',
-        'Block': account.address?.block || '',
-        'Area': account.address?.area || '',
-        'Staff': staffStr,
-        'VAT Number': account.vat || '',
-        'CR Number': account.crNumber || '',
-        'Credit Limit': account.creditLimit || 0,
-        'Status': account.isActive ? 'active' : 'inactive'
+    const csvData = accounts.map((account) => {
+      const row = {}
+      ACCOUNT_IMPORT_COLUMN_ORDER.forEach((col) => {
+        row[col] = ''
+      })
+      row.Name = account.name || ''
+      row['Phone Number'] = account.phone || ''
+      row.Email = account.email || ''
+      row['Flat/Shop No.'] = account.address?.flatShopNo || ''
+      row.Building = account.address?.building || ''
+      row.Road = account.address?.road || ''
+      row.Block = account.address?.block || ''
+      row.Area = account.address?.area || ''
+      row['VAT Number'] = account.vat || ''
+      row['CR Number'] = account.crNumber || ''
+      row['Credit Limit'] = account.creditLimit ?? 0
+      row.Status = account.isActive ? 'active' : 'inactive'
+
+      const staffList = account.staff && Array.isArray(account.staff) ? account.staff : []
+      for (let i = 0; i < Math.min(5, staffList.length); i++) {
+        const s = staffList[i]
+        const n = i + 1
+        row[`Staff ${n} Title`] = s.title || ''
+        row[`Staff ${n} Name`] = s.name || ''
+        row[`Staff ${n} Phone`] = s.phone || ''
+        row[`Staff ${n} Email`] = s.email || ''
+        row[`Staff ${n} Medical Branch`] = s.medicalBranch || ''
+        row[`Staff ${n} Specializations`] =
+          s.specializations && Array.isArray(s.specializations) ? s.specializations.join(', ') : ''
       }
+      row.Staff = staffToLegacyPipe(account)
+      return row
     })
 
-    // Convert to CSV format
     const csvContent = [
-      headers.join(','),
-      ...csvData.map(row => 
-        headers.map(header => {
-          const value = row[header] || ''
-          return `"${value.toString().replace(/"/g, '""')}"`
+      ACCOUNT_IMPORT_COLUMN_ORDER.join(','),
+      ...csvData.map((dataRow) =>
+        ACCOUNT_IMPORT_COLUMN_ORDER.map((header) => {
+          const value = dataRow[header] ?? ''
+          return `"${String(value).replace(/"/g, '""')}"`
         }).join(',')
       )
     ].join('\n')
@@ -1213,6 +1284,32 @@ function Accounts() {
                   Cancel
                 </SecondaryButton>
               </div>
+              {!selectedAccount && (
+                <p style={{ marginTop: '12px', fontSize: '0.875rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateModal(false)
+                      setShowEditModal(false)
+                      setSelectedAccount(null)
+                      resetForm()
+                      setShowImportModal(true)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      color: 'inherit',
+                      font: 'inherit'
+                    }}
+                  >
+                    Import accounts from Excel instead
+                  </button>
+                  <span style={{ opacity: 0.85 }}> — same columns as this form.</span>
+                </p>
+              )}
             </form>
           </div>
         </div>
@@ -1379,18 +1476,35 @@ function Accounts() {
               </button>
             </div>
             <div className="import-modal-body">
+              <p className="import-lead">
+                Import uses the <strong>same data as Create New Account</strong> (one row per account). Logos are not imported—add them after import or use Create New Account.
+              </p>
+              <div className="import-actions-row" style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <SecondaryButton
+                  type="button"
+                  onClick={() => {
+                    if (!importing) {
+                      setShowImportModal(false)
+                      setExcelFile(null)
+                      setImportResults(null)
+                      setErrorMessage('')
+                      openCreateModal()
+                    }
+                  }}
+                  disabled={importing}
+                >
+                  Open Create New Account
+                </SecondaryButton>
+              </div>
               <div className="import-instructions">
                 <h3>Instructions:</h3>
                 <ul className="instructions-list">
-                  <li>Download the template file to see the required format</li>
-                  <li><strong>Required fields:</strong> Name, Phone Number, Area, Flat/Shop No., Building, Road, Block, VAT Number, CR Number, Credit Limit, Status</li>
-                  <li><strong>Optional fields:</strong> Staff, Logo</li>
-                  <li><strong>Note:</strong> Only Staff and Logo are optional - all other fields are required</li>
-                  <li><strong>Staff format (optional):</strong> Title|Name|Phone|Email|MedicalBranch|Specializations (use semicolon ; to separate multiple staff)</li>
-                  <li><strong>Example:</strong> Dr|John Doe|+973 12345678|john@example.com|dentistry|orthodontics,implants</li>
-                  <li><strong>Note:</strong> Email is optional - you can leave it empty: Dr|John Doe|+973 12345678||dentistry|orthodontics,implants</li>
-                  <li>Status should be "active" or "inactive"</li>
-                  <li>Supported formats: .xlsx, .xls, .csv</li>
+                  <li>Download the template — column headers match the create form (address, VAT, CR, credit limit, staff).</li>
+                  <li><strong>Required:</strong> Name, Phone Number, Area, Flat/Shop No., Building, Road, Block, VAT Number, CR Number, Credit Limit, and <strong>at least one staff member</strong> with valid Title (Dr, Miss, Mr) and Medical Branch (e.g. <code>dentistry</code>).</li>
+                  <li><strong>Staff columns:</strong> use <code>Staff 1 …</code> through <code>Staff 5 …</code> (Title, Name, Phone, Email, Medical Branch, Specializations). Specializations: comma-separated. Same values as the dropdowns in Create New Account.</li>
+                  <li><strong>Alternative Staff column:</strong> <code>Staff</code> — <code>Title|Name|Phone|Email|MedicalBranch|Specializations</code>; separate multiple people with <code>;</code>. Use this only if you are not using the Staff 1–5 columns (do not mix both in one row).</li>
+                  <li><strong>Optional:</strong> Account Email, Status (defaults to active if blank). Status: <code>active</code> or <code>inactive</code>.</li>
+                  <li>Files: .xlsx, .xls, .csv</li>
                 </ul>
               </div>
 
