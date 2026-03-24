@@ -1433,9 +1433,9 @@ function Accounts() {
               <div className="import-instructions">
                 <h3>Instructions:</h3>
                 <ul className="instructions-list">
-                  <li><strong>Required columns:</strong> Name, Phone Number, Address, Area, VAT Number, CR Number, Credit Limit.</li>
+                  <li><strong>Required columns:</strong> Name, Phone Number, Area, VAT Number, CR Number, Credit Limit.</li>
                   <li><strong>Optional:</strong> Email, Status (leave Status blank for active). Use <code>inactive</code> to import as inactive.</li>
-                  <li><strong>Address:</strong> one cell with the full street/location text (same idea as a single address line on an order). Very long text is split across internal fields automatically.</li>
+                  <li><strong>Address (optional):</strong> one column <code>Address</code> and/or legacy columns <code>Flat/Shop No.</code>, <code>Building</code>, <code>Road</code>, <code>Block</code>. Commas split a single line into those fields; you can leave address blank and complete it later when editing the account.</li>
                   <li>Numbers (e.g. phone, CR, credit limit) can be typed as numbers in Excel—no need to force text.</li>
                   <li>After import, open each account to add <strong>staff</strong>, <strong>logo</strong>, and refine the address if needed.</li>
                   <li>Files: .xlsx, .xls, .csv</li>
