@@ -617,10 +617,7 @@ function Catalog() {
                 >
                   <div className="select-content">
                     {selectedCompany === 'All' ? (
-                      <>
-                        <span className="select-logo-placeholder">No logo</span>
-                        <span>All Companies</span>
-                      </>
+                      <span>All Companies</span>
                     ) : (() => {
                       const selected = companies.find(c => c.name === selectedCompany)
                       return (
@@ -644,7 +641,6 @@ function Catalog() {
                       className={`custom-option ${selectedCompany === 'All' ? 'selected' : ''}`}
                       onClick={() => handleCompanyChange('All')}
                     >
-                      <span className="select-logo-placeholder">No logo</span>
                       <span>All Companies</span>
                     </button>
                 {companies.map(company => (
@@ -728,6 +724,9 @@ function Catalog() {
                   <div className="select-content">
                     {(() => {
                       const selected = categories.find(c => c.name === selectedCategory)
+                      if (selectedCategory === 'All') {
+                        return <span>{selectedCategory}</span>
+                      }
                       return (
                         <>
                           {selected?.image ? (
@@ -751,11 +750,12 @@ function Catalog() {
                         className={`custom-option ${selectedCategory === category.name ? 'selected' : ''}`}
                         onClick={() => handleCategoryChange(category.name)}
                       >
-                        {category.image ? (
-                          <img src={category.image} alt={category.name} className="select-logo" />
-                        ) : (
-                          <span className="select-logo-placeholder">No logo</span>
-                        )}
+                        {category.name !== 'All' &&
+                          (category.image ? (
+                            <img src={category.image} alt={category.name} className="select-logo" />
+                          ) : (
+                            <span className="select-logo-placeholder">No logo</span>
+                          ))}
                         <span>{category.name}</span>
               </button>
             ))}
@@ -780,6 +780,9 @@ function Catalog() {
                   <div className="select-content">
                     {(() => {
                       const selected = brands.find(b => b.name === selectedBrand)
+                      if (selectedBrand === 'All') {
+                        return <span>{selectedBrand}</span>
+                      }
                       return (
                         <>
                           {selected?.logo ? (
@@ -803,11 +806,12 @@ function Catalog() {
                         className={`custom-option ${selectedBrand === brand.name ? 'selected' : ''}`}
                         onClick={() => handleBrandChange(brand.name)}
               >
-                        {brand.logo ? (
-                          <img src={brand.logo} alt={brand.name} className="select-logo" />
-                        ) : (
-                          <span className="select-logo-placeholder">No logo</span>
-                        )}
+                        {brand.name !== 'All' &&
+                          (brand.logo ? (
+                            <img src={brand.logo} alt={brand.name} className="select-logo" />
+                          ) : (
+                            <span className="select-logo-placeholder">No logo</span>
+                          ))}
                         <span>{brand.name}</span>
               </button>
             ))}
