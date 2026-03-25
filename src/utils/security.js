@@ -82,6 +82,34 @@ export const sanitizeObject = (obj) => {
   return obj;
 };
 
+const MONGO_OBJECT_ID_HEX = /^[a-f\d]{24}$/i;
+
+/**
+ * Normalize a value to a 24-char Mongo ObjectId string for URL/path segments.
+ * Returns '' if the value cannot be resolved (avoids "[object Object]" → API 400).
+ */
+export function normalizeMongoId(value) {
+  if (value == null || value === '') return '';
+  if (typeof value === 'string') {
+    const t = value.trim();
+    return MONGO_OBJECT_ID_HEX.test(t) ? t : '';
+  }
+  if (typeof value === 'object') {
+    if (typeof value.$oid === 'string' && MONGO_OBJECT_ID_HEX.test(value.$oid)) {
+      return value.$oid;
+    }
+    if (value._id != null) return normalizeMongoId(value._id);
+    if (typeof value.toHexString === 'function') {
+      const hex = value.toHexString();
+      return MONGO_OBJECT_ID_HEX.test(hex) ? hex : '';
+    }
+    if (value.id != null && typeof value.id !== 'object') {
+      return normalizeMongoId(value.id);
+    }
+  }
+  return '';
+}
+
 /**
  * Get API base URL from environment or default
  * @returns {string} - API base URL (without trailing /api)

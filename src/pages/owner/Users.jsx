@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { getApiUrl } from '../../utils/security'
+import { getApiUrl, normalizeMongoId } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import PrimaryButton from '../../components/PrimaryButton.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -8,12 +8,6 @@ import EmptyState from '../../components/EmptyState.jsx'
 import Loading from '../../components/Loading.jsx'
 import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Users.css'
-
-function normalizeMongoId(value) {
-  if (value == null) return ''
-  if (typeof value === 'object' && value !== null && value.$oid) return String(value.$oid)
-  return String(value)
-}
 
 function Users() {
   const { token, user: currentUser, refreshUser } = useAuth()
@@ -259,6 +253,12 @@ function Users() {
     e.preventDefault()
     
     try {
+      const updateId = normalizeMongoId(selectedUser?._id)
+      if (!updateId) {
+        setErrorMessage('Invalid user id. Refresh the page and try again.')
+        setShowErrorPopup(true)
+        return
+      }
       let avatarUrl = formData.avatar
       
       // Upload avatar image if a new file was selected
@@ -266,7 +266,7 @@ function Users() {
         avatarUrl = await uploadAvatarToSupabase(avatarFile)
       }
       
-      const response = await fetch(`${getApiUrl()}/api/user-management/${selectedUser._id}`, {
+      const response = await fetch(`${getApiUrl()}/api/user-management/${encodeURIComponent(updateId)}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -295,7 +295,7 @@ function Users() {
         loadUsers()
         
         // If the updated user is the current logged-in user, refresh their data
-        if (selectedUser._id === currentUser?.id || selectedUser._id === currentUser?._id) {
+        if (updateId === normalizeMongoId(currentUser?.id) || updateId === normalizeMongoId(currentUser?._id)) {
           await refreshUser()
         }
         
@@ -314,6 +314,11 @@ function Users() {
 
   const handleToggleStatus = (userId) => {
     const id = normalizeMongoId(userId)
+    if (!id) {
+      setErrorMessage('Invalid user id. Refresh the page and try again.')
+      setShowErrorPopup(true)
+      return
+    }
     // Prevent owner from deactivating themselves
     if (currentUser && (id === normalizeMongoId(currentUser.id) || id === normalizeMongoId(currentUser._id))) {
       setErrorMessage('You cannot deactivate your own account!')
@@ -357,9 +362,15 @@ function Users() {
   }
 
   const handleResetPassword = async (userId) => {
+    const id = normalizeMongoId(userId)
+    if (!id) {
+      setErrorMessage('Invalid user id. Refresh the page and try again.')
+      setShowErrorPopup(true)
+      return
+    }
     try {
       // Fetch user details to show in modal
-      const response = await fetch(`${getApiUrl()}/api/user-management/${userId}`, {
+      const response = await fetch(`${getApiUrl()}/api/user-management/${encodeURIComponent(id)}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -369,11 +380,11 @@ function Users() {
       if (data.success) {
         setSelectedUser(data.data)
       } else {
-        setSelectedUser({ _id: userId })
+        setSelectedUser({ _id: id })
       }
     } catch (error) {
       console.error('Error fetching user:', error)
-      setSelectedUser({ _id: userId })
+      setSelectedUser({ _id: id })
     }
     setNewPassword('')
     setShowPasswordModal(true)
@@ -387,7 +398,13 @@ function Users() {
     }
 
     try {
-      const response = await fetch(`${getApiUrl()}/api/user-management/${selectedUser._id}/reset-password`, {
+      const rid = normalizeMongoId(selectedUser?._id)
+      if (!rid) {
+        setErrorMessage('Invalid user id. Refresh the page and try again.')
+        setShowErrorPopup(true)
+        return
+      }
+      const response = await fetch(`${getApiUrl()}/api/user-management/${encodeURIComponent(rid)}/reset-password`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -415,8 +432,14 @@ function Users() {
   }
 
   const handleDeleteUser = (userId) => {
+    const id = normalizeMongoId(userId)
+    if (!id) {
+      setErrorMessage('Invalid user id. Refresh the page and try again.')
+      setShowErrorPopup(true)
+      return
+    }
     // Prevent owner from deleting themselves
-    if (currentUser && (userId === currentUser.id || userId === currentUser._id)) {
+    if (currentUser && (id === normalizeMongoId(currentUser.id) || id === normalizeMongoId(currentUser._id))) {
       setErrorMessage('You cannot delete your own account!')
       setShowErrorPopup(true)
       return
@@ -425,7 +448,7 @@ function Users() {
     setConfirmMessage('Are you sure you want to delete this user? This action cannot be undone.')
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`${getApiUrl()}/api/user-management/${userId}`, {
+        const response = await fetch(`${getApiUrl()}/api/user-management/${encodeURIComponent(id)}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -453,8 +476,14 @@ function Users() {
   }
 
   const handleViewProfile = async (userId) => {
+    const id = normalizeMongoId(userId)
+    if (!id) {
+      setErrorMessage('Invalid user id. Refresh the page and try again.')
+      setShowErrorPopup(true)
+      return
+    }
     try {
-      const response = await fetch(`${getApiUrl()}/api/user-management/${userId}`, {
+      const response = await fetch(`${getApiUrl()}/api/user-management/${encodeURIComponent(id)}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -503,7 +532,7 @@ function Users() {
             targetSales: initialTargetSales,
             targetSource: initialTargetSource
           })
-          await loadSalesPerformance(userId, userData)
+          await loadSalesPerformance(id, userData)
         }
       } else {
         setErrorMessage(data.message || 'Error loading user profile')
@@ -531,10 +560,11 @@ function Users() {
       const data = await response.json()
       
       if (data.success) {
+        const sid = normalizeMongoId(userId)
         // Filter orders by createdBy (salesman)
         const salesmanOrders = (data.data || []).filter(order => {
-          const orderSalesmanId = order.createdBy?._id || order.createdBy
-          return orderSalesmanId === userId || orderSalesmanId?.toString() === userId
+          const orderSalesmanId = normalizeMongoId(order.createdBy?._id || order.createdBy)
+          return sid && orderSalesmanId === sid
         })
 
         // Calculate statistics
@@ -681,7 +711,15 @@ function Users() {
         params.append('date', activityDateFilter)
       }
       
-      const url = `${getApiUrl()}/api/user-activity/user/${user._id}${params.toString() ? `?${params.toString()}` : ''}`
+      const uid = normalizeMongoId(user._id)
+      if (!uid) {
+        setErrorMessage('Invalid user id. Refresh the page and try again.')
+        setShowErrorPopup(true)
+        setUserActivity([])
+        setLoadingActivity(false)
+        return
+      }
+      const url = `${getApiUrl()}/api/user-activity/user/${encodeURIComponent(uid)}${params.toString() ? `?${params.toString()}` : ''}`
       
       const response = await fetch(url, {
         headers: {
@@ -726,7 +764,12 @@ function Users() {
             params.append('date', activityDateFilter)
           }
           
-          const url = `${getApiUrl()}/api/user-activity/user/${selectedActivityUser._id}${params.toString() ? `?${params.toString()}` : ''}`
+          const uid = normalizeMongoId(selectedActivityUser._id)
+          if (!uid) {
+            setUserActivity([])
+            return
+          }
+          const url = `${getApiUrl()}/api/user-activity/user/${encodeURIComponent(uid)}${params.toString() ? `?${params.toString()}` : ''}`
           
           const response = await fetch(url, {
             headers: {
