@@ -103,6 +103,12 @@
   flex-wrap: wrap;
 }
 
+.view-mode-controls {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .current-month {
   font-size: 16px;
   font-weight: 500;

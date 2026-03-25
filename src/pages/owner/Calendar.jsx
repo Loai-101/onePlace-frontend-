@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfYear, endOfYear, addWeeks, subWeeks, addYears, subYears, eachMonthOfInterval } from 'date-fns'
 import { getApiUrl } from '../../utils/security'
 import PageSection from '../../components/PageSection.jsx'
 import SecondaryButton from '../../components/SecondaryButton.jsx'
@@ -12,6 +12,7 @@ function OwnerCalendar() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [viewMode, setViewMode] = useState('month') // week | month | year
   const [selectedSalesman, setSelectedSalesman] = useState('')
   const [salesmen, setSalesmen] = useState([])
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false)
@@ -31,7 +32,7 @@ function OwnerCalendar() {
     if (token) {
       loadEvents()
     }
-  }, [token, currentDate, selectedSalesman])
+  }, [token, currentDate, selectedSalesman, viewMode])
 
   const loadSalesmen = async () => {
     try {
@@ -85,8 +86,18 @@ function OwnerCalendar() {
     try {
       setLoading(true)
       const apiUrl = getApiUrl()
-      const start = format(startOfMonth(currentDate), 'yyyy-MM-dd')
-      const end = format(endOfMonth(currentDate), 'yyyy-MM-dd')
+      const startDateByView = {
+        week: startOfWeek(currentDate),
+        month: startOfMonth(currentDate),
+        year: startOfYear(currentDate)
+      }
+      const endDateByView = {
+        week: endOfWeek(currentDate),
+        month: endOfMonth(currentDate),
+        year: endOfYear(currentDate)
+      }
+      const start = format(startDateByView[viewMode] || startOfMonth(currentDate), 'yyyy-MM-dd')
+      const end = format(endDateByView[viewMode] || endOfMonth(currentDate), 'yyyy-MM-dd')
       
       let url = `${apiUrl}/api/calendar?startDate=${start}&endDate=${end}`
       if (selectedSalesman) {
@@ -110,6 +121,42 @@ function OwnerCalendar() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const getCurrentPeriodLabel = () => {
+    if (viewMode === 'week') {
+      const start = startOfWeek(currentDate)
+      const end = endOfWeek(currentDate)
+      return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`
+    }
+    if (viewMode === 'year') {
+      return format(currentDate, 'yyyy')
+    }
+    return format(currentDate, 'MMMM yyyy')
+  }
+
+  const handlePrevious = () => {
+    if (viewMode === 'week') {
+      setCurrentDate(subWeeks(currentDate, 1))
+      return
+    }
+    if (viewMode === 'year') {
+      setCurrentDate(subYears(currentDate, 1))
+      return
+    }
+    setCurrentDate(subMonths(currentDate, 1))
+  }
+
+  const handleNext = () => {
+    if (viewMode === 'week') {
+      setCurrentDate(addWeeks(currentDate, 1))
+      return
+    }
+    if (viewMode === 'year') {
+      setCurrentDate(addYears(currentDate, 1))
+      return
+    }
+    setCurrentDate(addMonths(currentDate, 1))
   }
 
   const handleEventClick = async (event) => {
@@ -143,12 +190,22 @@ function OwnerCalendar() {
     })
   }
 
+  const getEventsForMonth = (monthDate) => {
+    return events.filter(event => {
+      const d = new Date(event.date)
+      return d.getMonth() === monthDate.getMonth() && d.getFullYear() === monthDate.getFullYear()
+    })
+  }
+
   // Generate calendar days
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
-  const calendarStart = startOfWeek(monthStart)
-  const calendarEnd = endOfWeek(monthEnd)
+  const weekStart = startOfWeek(currentDate)
+  const weekEnd = endOfWeek(currentDate)
+  const calendarStart = viewMode === 'week' ? weekStart : startOfWeek(monthStart)
+  const calendarEnd = viewMode === 'week' ? weekEnd : endOfWeek(monthEnd)
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
+  const calendarMonths = eachMonthOfInterval({ start: startOfYear(currentDate), end: endOfYear(currentDate) })
 
   // Color palette for events on the same day
   const eventColorPalette = [
@@ -203,13 +260,24 @@ function OwnerCalendar() {
       <div className="calendar-header">
         <h1 className="page-title">Salesmen Calendar</h1>
         <div className="calendar-controls">
-          <SecondaryButton onClick={() => setCurrentDate(subMonths(currentDate, 1))}>
-            Previous Month
+          <SecondaryButton onClick={handlePrevious}>
+            Previous {viewMode}
           </SecondaryButton>
-          <span className="current-month">{format(currentDate, 'MMMM yyyy')}</span>
-          <SecondaryButton onClick={() => setCurrentDate(addMonths(currentDate, 1))}>
-            Next Month
+          <span className="current-month">{getCurrentPeriodLabel()}</span>
+          <SecondaryButton onClick={handleNext}>
+            Next {viewMode}
           </SecondaryButton>
+          <div className="view-mode-controls">
+            <SecondaryButton onClick={() => setViewMode('week')} style={viewMode === 'week' ? { opacity: 1, fontWeight: 700 } : { opacity: 0.8 }}>
+              Week
+            </SecondaryButton>
+            <SecondaryButton onClick={() => setViewMode('month')} style={viewMode === 'month' ? { opacity: 1, fontWeight: 700 } : { opacity: 0.8 }}>
+              Month
+            </SecondaryButton>
+            <SecondaryButton onClick={() => setViewMode('year')} style={viewMode === 'year' ? { opacity: 1, fontWeight: 700 } : { opacity: 0.8 }}>
+              Year
+            </SecondaryButton>
+          </div>
         </div>
       </div>
 
@@ -242,17 +310,46 @@ function OwnerCalendar() {
       <PageSection title="Calendar View">
         {loading ? (
           <Loading message="Loading calendar events..." />
+        ) : viewMode === 'year' ? (
+          <div className="calendar-container">
+            <div className="calendar-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', background: 'transparent', border: 'none' }}>
+              {calendarMonths.map((monthDate) => {
+                const monthEvents = getEventsForMonth(monthDate)
+                const completedCount = monthEvents.filter((e) => e.status === 'completed').length
+                return (
+                  <div
+                    key={format(monthDate, 'yyyy-MM')}
+                    className="calendar-day"
+                    style={{ minHeight: '110px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                    onClick={() => {
+                      setCurrentDate(monthDate)
+                      setViewMode('month')
+                    }}
+                  >
+                    <div className="day-number" style={{ fontSize: '1rem' }}>{format(monthDate, 'MMMM')}</div>
+                    <div className="day-events">
+                      <div className="more-events">{monthEvents.length} event(s)</div>
+                      <div className="more-events">{completedCount} completed</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         ) : (
           <div className="calendar-container">
             <div className="calendar-grid">
               {/* Day headers */}
-              <div className="calendar-day-header">Sun</div>
-              <div className="calendar-day-header">Mon</div>
-              <div className="calendar-day-header">Tue</div>
-              <div className="calendar-day-header">Wed</div>
-              <div className="calendar-day-header">Thu</div>
-              <div className="calendar-day-header">Fri</div>
-              <div className="calendar-day-header">Sat</div>
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((name, idx) => (
+                <div key={name} className="calendar-day-header">
+                  {name}
+                  {viewMode === 'week' && (
+                    <div style={{ fontSize: '0.75rem', fontWeight: 400 }}>
+                      {format(calendarDays[idx], 'MMM d')}
+                    </div>
+                  )}
+                </div>
+              ))}
 
               {/* Calendar days */}
               {calendarDays.map((day, index) => {
