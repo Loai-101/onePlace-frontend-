@@ -9,6 +9,12 @@ import Loading from '../../components/Loading.jsx'
 import { usePopupFocus } from '../../hooks/usePopupFocus'
 import './Users.css'
 
+function normalizeMongoId(value) {
+  if (value == null) return ''
+  if (typeof value === 'object' && value !== null && value.$oid) return String(value.$oid)
+  return String(value)
+}
+
 function Users() {
   const { token, user: currentUser, refreshUser } = useAuth()
   const [users, setUsers] = useState([])
@@ -307,8 +313,9 @@ function Users() {
   }
 
   const handleToggleStatus = (userId) => {
+    const id = normalizeMongoId(userId)
     // Prevent owner from deactivating themselves
-    if (currentUser && (userId === currentUser.id || userId === currentUser._id)) {
+    if (currentUser && (id === normalizeMongoId(currentUser.id) || id === normalizeMongoId(currentUser._id))) {
       setErrorMessage('You cannot deactivate your own account!')
       setShowErrorPopup(true)
       return
@@ -317,7 +324,7 @@ function Users() {
     setConfirmMessage('Are you sure you want to change this user\'s status?')
     setConfirmAction(() => async () => {
       try {
-        const response = await fetch(`${getApiUrl()}/api/user-management/${userId}/toggle-status`, {
+        const response = await fetch(`${getApiUrl()}/api/user-management/${encodeURIComponent(id)}/toggle-status`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -325,14 +332,19 @@ function Users() {
           }
         })
 
-        const data = await response.json()
+        let data = {}
+        try {
+          data = await response.json()
+        } catch {
+          // non-JSON body
+        }
         
-        if (data.success) {
-          loadUsers()
-          setSuccessMessage(data.message)
+        if (response.ok && data.success) {
+          await loadUsers()
+          setSuccessMessage(data.message || 'User status updated.')
           setShowSuccessPopup(true)
         } else {
-          setErrorMessage(data.message || 'Error updating user status')
+          setErrorMessage(data.message || `Error updating user status (${response.status})`)
           setShowErrorPopup(true)
         }
       } catch (error) {
@@ -945,7 +957,7 @@ function Users() {
             </thead>
             <tbody>
                 {filteredUsers.map(user => (
-                  <tr key={user._id}>
+                  <tr key={normalizeMongoId(user._id)}>
                     <td>
                       <div className="user-info">
                         <div className="user-avatar">
@@ -970,8 +982,8 @@ function Users() {
                       </span>
                     </td>
                     <td>
-                      <span className={`status-badge ${user.isActive ? 'status-active' : 'status-inactive'}`}>
-                        {user.isActive ? 'Active' : 'Inactive'}
+                      <span className={`status-badge ${user.isActive !== false ? 'status-active' : 'status-inactive'}`}>
+                        {user.isActive !== false ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td>
@@ -999,21 +1011,21 @@ function Users() {
                           </button>
                         )}
                         <button 
-                          className={`btn-text ${(currentUser?.id === user._id || currentUser?._id === user._id) ? 'btn-disabled' : ''}`}
+                          className={`btn-text ${(normalizeMongoId(currentUser?.id) === normalizeMongoId(user._id) || normalizeMongoId(currentUser?._id) === normalizeMongoId(user._id)) ? 'btn-disabled' : ''}`}
                           onClick={() => handleToggleStatus(user._id)}
-                          title={(currentUser?.id === user._id || currentUser?._id === user._id) ? 'Cannot deactivate yourself' : (user.isActive ? 'Deactivate' : 'Activate')}
-                          disabled={(currentUser?.id === user._id || currentUser?._id === user._id)}
+                          title={(normalizeMongoId(currentUser?.id) === normalizeMongoId(user._id) || normalizeMongoId(currentUser?._id) === normalizeMongoId(user._id)) ? 'Cannot deactivate yourself' : (user.isActive !== false ? 'Deactivate' : 'Activate')}
+                          disabled={(normalizeMongoId(currentUser?.id) === normalizeMongoId(user._id) || normalizeMongoId(currentUser?._id) === normalizeMongoId(user._id))}
                         >
-                          {user.isActive ? 'Deactivate' : 'Activate'}
+                          {user.isActive !== false ? 'Deactivate' : 'Activate'}
                         </button>
                         <button className="btn-text" onClick={() => handleResetPassword(user._id)} title="Reset Password">
                           Reset Password
                         </button>
                         <button 
-                          className={`btn-text btn-delete ${(currentUser?.id === user._id || currentUser?._id === user._id) ? 'btn-disabled' : ''}`}
+                          className={`btn-text btn-delete ${(normalizeMongoId(currentUser?.id) === normalizeMongoId(user._id) || normalizeMongoId(currentUser?._id) === normalizeMongoId(user._id)) ? 'btn-disabled' : ''}`}
                           onClick={() => handleDeleteUser(user._id)} 
-                          title={(currentUser?.id === user._id || currentUser?._id === user._id) ? 'Cannot delete yourself' : 'Delete'}
-                          disabled={(currentUser?.id === user._id || currentUser?._id === user._id)}
+                          title={(normalizeMongoId(currentUser?.id) === normalizeMongoId(user._id) || normalizeMongoId(currentUser?._id) === normalizeMongoId(user._id)) ? 'Cannot delete yourself' : 'Delete'}
+                          disabled={(normalizeMongoId(currentUser?.id) === normalizeMongoId(user._id) || normalizeMongoId(currentUser?._id) === normalizeMongoId(user._id))}
                         >
                           Delete
                         </button>
