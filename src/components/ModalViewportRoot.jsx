@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { installModalViewportScroll } from '../utils/modalViewportScroll'
 
-/** Installs global modal scroll-into-view for touch/tablet (e.g. iPad) on all routes. */
+/** Installs global modal scroll-into-view on all routes (desktop and touch). */
 export default function ModalViewportRoot({ children }) {
   useEffect(() => installModalViewportScroll(), [])
   return children

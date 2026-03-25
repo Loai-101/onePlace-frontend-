@@ -1,7 +1,6 @@
 /**
- * Scroll/focus modals on touch tablets (iPad, etc.): Safari often keeps the
- * page scroll position so the dialog feels "off-screen". Reset scroll and
- * bring the dialog into the visual viewport.
+ * Scroll/focus modals on all devices (PC, iPad, phones): reset scroll containers
+ * that can leave a fixed overlay misaligned, then bring the dialog into view.
  */
 
 const OVERLAY_SELECTOR =
@@ -10,14 +9,6 @@ const OVERLAY_SELECTOR =
 /** Ref-count observer for React StrictMode double-mount in development */
 let modalScrollInstallCount = 0
 let modalScrollTeardown = null
-
-function isTouchLikeUi() {
-  if (typeof window === 'undefined' || !window.matchMedia) return false
-  if (window.matchMedia('(pointer: coarse)').matches) return true
-  // iPad / tablet landscape often reports fine pointer; still help mid-size touch UIs
-  if (window.matchMedia('(hover: none) and (max-width: 1024px)').matches) return true
-  return false
-}
 
 function resetPageScrollForModal() {
   try {
@@ -37,9 +28,7 @@ function resetPageScrollForModal() {
 export function scrollModalIntoViewport(focusTarget) {
   if (!focusTarget || typeof focusTarget.getBoundingClientRect !== 'function') return
 
-  if (isTouchLikeUi()) {
-    resetPageScrollForModal()
-  }
+  resetPageScrollForModal()
 
   const overlay = focusTarget.closest(OVERLAY_SELECTOR)
   if (overlay) {
