@@ -43,13 +43,29 @@ export function scrollModalIntoViewport(focusTarget) {
         overlay.scrollIntoView(true)
       }
     }
-    if (!focusTarget.hasAttribute('tabindex')) {
-      focusTarget.setAttribute('tabindex', '-1')
-    }
-    try {
-      focusTarget.focus({ preventScroll: false })
-    } catch {
-      focusTarget.focus()
+
+    // Do not steal focus while the user is typing/selecting in a form control.
+    const activeEl = document.activeElement
+    const isEditableActive =
+      activeEl &&
+      activeEl !== document.body &&
+      typeof activeEl.matches === 'function' &&
+      activeEl.matches('input, textarea, select, [contenteditable="true"], [contenteditable=""], [contenteditable]')
+    const activeInsideSameOverlay =
+      Boolean(isEditableActive) &&
+      overlay &&
+      typeof activeEl.closest === 'function' &&
+      activeEl.closest(OVERLAY_SELECTOR) === overlay
+
+    if (!activeInsideSameOverlay) {
+      if (!focusTarget.hasAttribute('tabindex')) {
+        focusTarget.setAttribute('tabindex', '-1')
+      }
+      try {
+        focusTarget.focus({ preventScroll: false })
+      } catch {
+        focusTarget.focus()
+      }
     }
     try {
       focusTarget.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
