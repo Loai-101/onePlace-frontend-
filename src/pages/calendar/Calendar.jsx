@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfYear, endOfYear, addWeeks, subWeeks, addYears, subYears, eachMonthOfInterval } from 'date-fns'
 import PageSection from '../../components/PageSection.jsx'
@@ -41,6 +41,11 @@ function Calendar() {
   const [reportFileName, setReportFileName] = useState('')
   const [uploadingReport, setUploadingReport] = useState(false)
   const [showReportSuccess, setShowReportSuccess] = useState(false)
+  const [reportMentionSuggestions, setReportMentionSuggestions] = useState([])
+  const [showReportMentionDropdown, setShowReportMentionDropdown] = useState(false)
+  const [reportMentionSelectedIndex, setReportMentionSelectedIndex] = useState(0)
+  const [activeMentionRange, setActiveMentionRange] = useState({ start: -1, end: -1 })
+  const reportTextareaRef = useRef(null)
   
   // Form state
   const [eventType, setEventType] = useState('visit') // 'visit' or 'todo'
@@ -68,6 +73,12 @@ function Calendar() {
       loadAccounts()
     }
   }, [token, currentDate, viewMode])
+
+  useEffect(() => {
+    if (!showReportModal || reportType !== 'write') {
+      setShowReportMentionDropdown(false)
+    }
+  }, [showReportModal, reportType])
 
   const loadEvents = async () => {
     try {
@@ -446,6 +457,101 @@ function Calendar() {
   }
 
   // Handle save report as PDF
+  const updateReportMentionSuggestions = (nextText, cursorPosition) => {
+    const normalizedCursor = Math.max(0, Math.min(cursorPosition ?? nextText.length, nextText.length))
+    const textBeforeCursor = nextText.slice(0, normalizedCursor)
+    const mentionStart = textBeforeCursor.lastIndexOf('@')
+
+    if (mentionStart === -1) {
+      setShowReportMentionDropdown(false)
+      return
+    }
+
+    // Mention should start at beginning or after whitespace.
+    if (mentionStart > 0 && !/\s/.test(textBeforeCursor[mentionStart - 1])) {
+      setShowReportMentionDropdown(false)
+      return
+    }
+
+    const rawQuery = textBeforeCursor.slice(mentionStart + 1)
+    if (/\s/.test(rawQuery)) {
+      setShowReportMentionDropdown(false)
+      return
+    }
+
+    const query = rawQuery.toLowerCase()
+    const uniqueAccountNames = Array.from(new Set(
+      (accounts || []).map(account => account?.name).filter(Boolean)
+    ))
+
+    const matches = uniqueAccountNames
+      .filter(name => name.toLowerCase().startsWith(query))
+      .slice(0, 8)
+
+    if (matches.length === 0) {
+      setShowReportMentionDropdown(false)
+      return
+    }
+
+    setActiveMentionRange({ start: mentionStart, end: normalizedCursor })
+    setReportMentionSuggestions(matches)
+    setReportMentionSelectedIndex(0)
+    setShowReportMentionDropdown(true)
+  }
+
+  const handleReportContentChange = (e) => {
+    const nextText = e.target.value
+    setReportContent(nextText)
+    updateReportMentionSuggestions(nextText, e.target.selectionStart)
+  }
+
+  const insertSelectedAccountMention = (accountName) => {
+    if (!accountName || activeMentionRange.start < 0 || activeMentionRange.end < 0) return
+
+    const beforeMention = reportContent.slice(0, activeMentionRange.start)
+    const afterMention = reportContent.slice(activeMentionRange.end)
+    const mentionText = `@${accountName} `
+    const nextContent = `${beforeMention}${mentionText}${afterMention}`
+    const nextCursor = beforeMention.length + mentionText.length
+
+    setReportContent(nextContent)
+    setShowReportMentionDropdown(false)
+
+    setTimeout(() => {
+      if (reportTextareaRef.current) {
+        reportTextareaRef.current.focus()
+        reportTextareaRef.current.setSelectionRange(nextCursor, nextCursor)
+      }
+    }, 0)
+  }
+
+  const handleReportTextareaKeyDown = (e) => {
+    if (!showReportMentionDropdown || reportMentionSuggestions.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setReportMentionSelectedIndex(prev => (prev + 1) % reportMentionSuggestions.length)
+      return
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setReportMentionSelectedIndex(prev => (prev - 1 + reportMentionSuggestions.length) % reportMentionSuggestions.length)
+      return
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      insertSelectedAccountMention(reportMentionSuggestions[reportMentionSelectedIndex])
+      return
+    }
+
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      setShowReportMentionDropdown(false)
+    }
+  }
+
   const handleSaveAsPdf = async () => {
     if (!reportTitle.trim()) {
       showNotification('Please enter a report title', 'error')
@@ -1206,15 +1312,36 @@ function Calendar() {
                       </div>
                       <div className="form-group">
                         <label>Description *</label>
-                        <textarea
-                          value={reportContent}
-                          onChange={(e) => setReportContent(e.target.value)}
-                          rows="10"
-                          placeholder="Write your report here..."
-                          style={{ minHeight: '200px' }}
-                        />
+                        <div className="report-mention-wrapper">
+                          <textarea
+                            ref={reportTextareaRef}
+                            value={reportContent}
+                            onChange={handleReportContentChange}
+                            onKeyDown={handleReportTextareaKeyDown}
+                            rows="10"
+                            placeholder="Write your report here... (use @ to mention account names)"
+                            style={{ minHeight: '200px' }}
+                          />
+                          {showReportMentionDropdown && (
+                            <div className="report-mention-dropdown">
+                              {reportMentionSuggestions.map((accountName, index) => (
+                                <button
+                                  key={accountName}
+                                  type="button"
+                                  className={`report-mention-option ${index === reportMentionSelectedIndex ? 'active' : ''}`}
+                                  onMouseDown={(event) => {
+                                    event.preventDefault()
+                                    insertSelectedAccountMention(accountName)
+                                  }}
+                                >
+                                  {accountName}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <small style={{ color: '#6c757d', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>
-                          Salesman name, date, and time will be automatically added to the PDF
+                          Type @ then account letters to mention an account. Salesman name, date, and time will be added automatically.
                         </small>
                       </div>
                     </>
