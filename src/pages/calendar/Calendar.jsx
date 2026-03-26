@@ -481,7 +481,14 @@ function Calendar() {
 
     const query = rawQuery.toLowerCase()
     const uniqueAccountNames = Array.from(new Set(
-      (accounts || []).map(account => account?.name).filter(Boolean)
+      (accounts || [])
+        .map(account => {
+          const rawName = account?.name
+          if (typeof rawName === 'string') return rawName.trim()
+          if (rawName == null) return ''
+          return String(rawName).trim()
+        })
+        .filter(Boolean)
     ))
 
     const matches = uniqueAccountNames
@@ -502,7 +509,12 @@ function Calendar() {
   const handleReportContentChange = (e) => {
     const nextText = e.target.value
     setReportContent(nextText)
-    updateReportMentionSuggestions(nextText, e.target.selectionStart)
+    try {
+      updateReportMentionSuggestions(nextText, e.target.selectionStart)
+    } catch (error) {
+      console.error('Report mention suggestion error:', error)
+      setShowReportMentionDropdown(false)
+    }
   }
 
   const insertSelectedAccountMention = (accountName) => {
