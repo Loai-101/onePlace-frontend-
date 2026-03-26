@@ -80,6 +80,20 @@ function Calendar() {
     }
   }, [showReportModal, reportType])
 
+  useEffect(() => {
+    if (showReportModal && reportType === 'write') {
+      const timer = setTimeout(() => {
+        if (reportTextareaRef.current) {
+          reportTextareaRef.current.focus()
+          const length = reportTextareaRef.current.value?.length || 0
+          reportTextareaRef.current.setSelectionRange(length, length)
+        }
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [showReportModal, reportType])
+
   const loadEvents = async () => {
     try {
       setLoading(true)
@@ -1257,7 +1271,9 @@ function Calendar() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setReportType('write')}
+                        onClick={() => {
+                          setReportType('write')
+                        }}
                         style={{
                           padding: '1.5rem',
                           border: '2px solid #007bff',
@@ -1323,9 +1339,15 @@ function Calendar() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Description *</label>
+                        <label
+                          htmlFor="report-description-write"
+                          onClick={() => reportTextareaRef.current?.focus()}
+                        >
+                          Description *
+                        </label>
                         <div className="report-mention-wrapper">
                           <textarea
+                            id="report-description-write"
                             ref={reportTextareaRef}
                             value={reportContent}
                             onChange={handleReportContentChange}
@@ -1333,6 +1355,7 @@ function Calendar() {
                             rows="10"
                             placeholder="Write your report here... (use @ to mention account names)"
                             style={{ minHeight: '200px' }}
+                            autoFocus
                           />
                           {showReportMentionDropdown && (
                             <div className="report-mention-dropdown">
