@@ -506,8 +506,8 @@ function Calendar() {
     ))
 
     const matches = uniqueAccountNames
-      .filter(name => name.toLowerCase().startsWith(query))
-      .slice(0, 8)
+      .filter(name => name.toLowerCase().includes(query))
+      .sort((a, b) => a.localeCompare(b))
 
     if (matches.length === 0) {
       setShowReportMentionDropdown(false)
