@@ -399,6 +399,7 @@
 
 .report-mention-wrapper {
   position: relative;
+  cursor: text;
 }
 
 .report-mention-dropdown {

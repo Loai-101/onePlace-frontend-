@@ -578,6 +578,11 @@ function Calendar() {
     }
   }
 
+  const focusReportDescription = () => {
+    if (!reportTextareaRef.current) return
+    reportTextareaRef.current.focus()
+  }
+
   const handleSaveAsPdf = async () => {
     if (!reportTitle.trim()) {
       showNotification('Please enter a report title', 'error')
@@ -1345,17 +1350,27 @@ function Calendar() {
                         >
                           Description *
                         </label>
-                        <div className="report-mention-wrapper">
+                        <div
+                          className="report-mention-wrapper"
+                          onMouseDown={() => {
+                            setTimeout(() => focusReportDescription(), 0)
+                          }}
+                          onTouchStart={() => {
+                            setTimeout(() => focusReportDescription(), 0)
+                          }}
+                        >
                           <textarea
                             id="report-description-write"
                             ref={reportTextareaRef}
                             value={reportContent}
                             onChange={handleReportContentChange}
                             onKeyDown={handleReportTextareaKeyDown}
+                            onFocus={() => focusReportDescription()}
                             rows="10"
                             placeholder="Write your report here... (use @ to mention account names)"
                             style={{ minHeight: '200px' }}
                             autoFocus
+                            tabIndex={0}
                           />
                           {showReportMentionDropdown && (
                             <div className="report-mention-dropdown">
